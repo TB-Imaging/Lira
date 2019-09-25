@@ -1,6 +1,8 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+// const fs = require('fs');
+
 
 function App() {
   return (
@@ -17,6 +19,7 @@ function App() {
           rel="noopener noreferrer"
         >
           Learn React
+          {/*{ fs.readdirSync('/') }*/}
         </a>
       </header>
     </div>
