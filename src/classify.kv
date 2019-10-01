@@ -1,0 +1,86 @@
+#:set barHeight 20
+#:set textInputGap 10
+
+<ClassifyWindow>:
+    FloatLayout:
+        canvas:
+            Color:
+                rgba: 10/255, 13/255, 30/255, 1
+            Rectangle:
+                size: self.size
+        Label:
+            size_hint: None, None
+            text: "User ID"
+            size: 50, 40
+            pos: uid_text.pos[0], uid_text.pos[1] + uid_text.height
+        TextInput:
+            id: uid_text
+            size_hint: None, None
+            multiline: False
+            size: 400, 30
+            pos: (root.width - self.width) / 2, (root.height - self.height) /2
+            on_text:
+                if self.text.strip() == "": beginButton.disabled = True
+                else: beginButton.disabled = False
+        CheckBoxBox:
+            id: restart_box
+            size_hint: None, None
+            size: 100, 50
+            pos: uid_text.pos[0], uid_text.pos[1] - self.height - textInputGap
+        MenuButton:
+            id: beginButton
+            text: "Begin"
+            disabled: True
+            pos: uid_text.pos[0] + uid_text.width - self.width, uid_text.pos[1] - self.height - textInputGap
+            on_release: app.beginClassify(uid_text.text.strip(), restart_box.getChecked())
+    Bar:
+        id: topbar
+        pos: 0, root.height - barHeight
+        size: root.width, barHeight
+    Bar:
+        id: footbar
+        pos: 0, 0
+        size: root.width, barHeight
+
+<CheckBoxBox>:
+    size_hint: None, None
+    canvas:
+        Color:
+            rgba: 101/255, 101/255, 101/255, 1
+        Rectangle:
+            size: self.size
+    Label:
+        size_hint: None, None
+        text: "Restart"
+        size: root.width * 2 / 3, root.height
+
+#        pos: uid_text.pos[0], uid_text.pos[1] + uid_text.height
+    CheckBox:
+        canvas.before:
+            Color:
+                rgb: 1,1,1
+            Rectangle:
+                pos:self.center_x-8, self.center_y-8
+                size:[16,16]
+            Color:
+                rgb: 0,0,0
+            Rectangle:
+                pos:self.center_x-7, self.center_y-7
+                size:[14,14]
+        size_hint: None, None
+        size: root.width / 3, root.height
+        pos: root.width - self.width, 0
+
+
+<Bar>:
+    size_hint: None, None
+    canvas:
+        Color:
+            rgba: 70/255, 71/255, 67/255, 1
+        Rectangle:
+            size: self.size
+
+<MenuButton>:
+    size_hint: None, None
+    size: 100,50
+    width: 100
