@@ -3,6 +3,7 @@ from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.button import Button
@@ -30,6 +31,13 @@ class CheckBoxBox(RelativeLayout):
         return False
 
 
+class StartScreen(Screen):
+    pass
+
+
+class
+
+
 class Bar(RelativeLayout):
     pass
 
@@ -44,13 +52,23 @@ class ClassifyApp(App):
         return ClassifyWindow()
 
     def beginClassify(self, uid, restart):
-        res, ret = classify(uid, restart)
-        if res == exceptionValues["NO_INPUT"]:
+        try:
+            dataset = Dataset(uid=uid, restart=restart)
+            self.moveToTypeOneDetectionEditor()
+            dataset.detect_type_ones(kivy=True)
+
+        except Exception as e:
             popup = Popup(title="No Input",
-                          content=Label(text=str(ret)),
+                          content=Label(text=str(e)),
                           size_hint=(None, None),
                           size=(300, 300))
             popup.open()
+        # res, ret = classify(uid, restart)
+        # if res == exceptionValues["NO_INPUT"]:
+        # else
+
+    def moveToTypeOneDetectionEditor(self):
+        pass
 
 
 # Main function to put all images through our classification pipeline. Returns the dataset used during the pipeline.
