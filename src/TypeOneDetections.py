@@ -138,7 +138,8 @@ class TypeOneDetections(object):
                                 detection = [x1, y1, x2, y2]
                                 detections.append(detection)
 
-            # Save these detections to both the before and after editing datasets, since we initialize them to be the same.
+            # Save these detections to both the before and after editing datasets, since we initialize them to be the
+            # same.
             self.before_editing[img_i] = detections
             self.after_editing[img_i] = detections
 
@@ -149,6 +150,7 @@ class TypeOneDetections(object):
         print("")
 
     def edit(self):
-        # Displays detections on all images and allows the user to edit them until they are finished. The editor handles the saving of edits.
+        # Displays detections on all images and allows the user to edit them until they are finished. The editor
+        # handles the saving of edits.
         editor = TypeOneDetectionEditor(self.dataset)
         # editor.start_editing()
