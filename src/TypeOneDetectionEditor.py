@@ -28,11 +28,18 @@ class TypeOneDetectionEditor(object):
         self.frame.grid(row=0, column=0)
 
         # Hard-code choice of resolution for canvas and scroll region as maximum shape of images*resize_factor
-        self.canvas = Canvas(self.frame, bg="#000000", width=1366, height=768, scrollregion=(0, 0,
-                                                                                             self.dataset.imgs.max_shape()[
-                                                                                                 1] * self.editor_resize_factor,
-                                                                                             self.dataset.imgs.max_shape()[
-                                                                                                 0] * self.editor_resize_factor))
+        self.canvas = Canvas(
+            self.frame,
+            bg="#000000",
+            width=1366,
+            height=768,
+            scrollregion=(
+                0, 0,
+            self.dataset.imgs.max_shape()[
+                1] * self.editor_resize_factor,
+            self.dataset.imgs.max_shape()[
+                0] * self.editor_resize_factor)
+        )
 
         # Scrollbars
         hbar = Scrollbar(self.frame, orient=HORIZONTAL)
@@ -46,8 +53,11 @@ class TypeOneDetectionEditor(object):
         # Img + Event listeners
         self.canvas.image = ImageTk.PhotoImage(
             Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
-        self.canvas_image_config = self.canvas.create_image(0, 0, image=self.canvas.image,
-                                                            anchor="nw")  # So we can change the image later
+        self.canvas_image_config = self.canvas.create_image(
+            0, 0,
+            image=self.canvas.image,
+            anchor="nw"
+        )  # So we can change the image later
         self.canvas.focus_set()
         self.canvas.bind("<Button 1>", self.mouse_click)  # left
         self.canvas.bind("<Button 3>", self.mouse_click)  # right
@@ -91,16 +101,20 @@ class TypeOneDetectionEditor(object):
         self.selection_x2, self.selection_y2 = get_canvas_coordinates(event)
 
         # Get rectangle coordinates from our initial mouse click point to this point
-        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(self.selection_x1, self.selection_y1,
-                                                                       self.selection_x2, self.selection_y2)
+        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(
+            self.selection_x1, self.selection_y1,
+            self.selection_x2, self.selection_y2
+        )
 
         # Get coordinates for a new rectangle outline with this new rectangle
-        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(rect_x1,
-                                                                                                               rect_y1,
-                                                                                                               rect_x2,
-                                                                                                               rect_y2,
-                                                                                                               self.step_h,
-                                                                                                               self.step_w)
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            rect_x1,
+            rect_y1,
+            rect_x2,
+            rect_y2,
+            self.step_h,
+            self.step_w
+        )
 
         # Delete old selection rectangle and draw new one with this new rectangle outline
         self.canvas.delete("selection")
