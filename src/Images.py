@@ -1,8 +1,26 @@
 import sys
 import cv2
 import numpy as np
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+import threading
 
+from LiraExceptions import InputEmptyError
 from base import *
+from tktools import center_left_window
+
+
+class AsyncProgressBar(threading.Thread):
+
+    def __init__(self, tk_root):
+        self.root = tk_root
+        threading.Thread.__init__(self)
+        self.start()
+
+    def run(self):
+        pass
+
 
 class Images(object):
     """
@@ -24,10 +42,37 @@ class Images(object):
             """
             # Delete all files in the archive directory if restarting
             clear_dir(self.archive_dir)
+            root = tk.Tk()
+            # progress = ArchiveProgress(root)
+            progress = ttk.Progressbar(
+                root,
+                orient=tk.HORIZONTAL,
+                length=300,
+                mode="determinate",
+            )
+            img_names = [name for name in fnames(self.img_dir)]
+            progressText = tk.StringVar()
+            progressLabel = tk.Label(root, textvariable=progressText)
+            progressLabel.pack(pady=5, padx=10)
+            progress.pack(pady=5, padx=10)
+            root.title("L.I.R.A.")
+            root.resizable(False, False)
+            center_left_window(root, 320, 57)
 
-            for i, fname in enumerate(fnames(self.img_dir)):
+            def on_closing():
+                if messagebox.askokcancel("Quit", "Do you want to quit?"):
+                    root.destroy()
+                    sys.exit()
+
+            root.protocol("WM_DELETE_WINDOW", on_closing)
+            root.update()
+            for i, fname in enumerate(img_names):
                 # Progress indicator
-                sys.stdout.write("\rArchiving Image {}/{}...".format(i, len([fname for fname in fnames(self.img_dir)])-1))
+                progressText.set("Archiving Images: {}/{} Complete".format(i, len(img_names)))
+                progress['value'] = 100 * i / len(img_names)
+                root.update_idletasks()
+                root.update()
+                sys.stdout.write("\rArchiving Image {}/{}...".format(i + 1, len(img_names)))
 
                 # Read src, Check max shape, Create archive at dst, add dst to archive list
                 src_fpath = os.path.join(self.img_dir, fname)
@@ -36,6 +81,8 @@ class Images(object):
                 self.archives.append(dst_fpath)
 
             sys.stdout.flush()
+            progress.destroy()
+            root.destroy()
             print("")
         else:
             # use existing archive files
@@ -45,7 +92,7 @@ class Images(object):
         # Initialize to the original list of images ordered in the input images folder
         self.fnames = [fname for fname in fnames(self.img_dir)]
         if len(self.fnames) == 0:
-            raise Exception('Input directory is empty.')
+            raise InputEmptyError('Input directory is empty.')
 
         # Regardless of this we sort the result, since it depends on the nondeterministic ordering of the os.walk
         # generator in fnames()

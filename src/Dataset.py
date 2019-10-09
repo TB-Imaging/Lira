@@ -1,20 +1,91 @@
 import sys
 import numpy as np
 import cv2
+import tkinter as tk
+from tkinter import messagebox
 
 from base import *
 from UserProgress import UserProgress
 from Images import Images
 from TypeOneDetections import TypeOneDetections
 from PredictionGrids import PredictionGrids
+from tktools import center_left_window
+
+
+def inputFolderLoaded():
+    img_dir = "../../Input Images/"
+    return len([fname for fname in fnames(img_dir)]) > 0
+
+
+class BeginDialog(tk.Toplevel):
+
+    def __init__(self, parent):
+        tk.Toplevel.__init__(self, parent)
+        self.title = "Title"
+        tk.Label(self, text="User ID").grid(row=0)
+        tk.Label(self, text="Restart").grid(row=1, columnspan=2, sticky=tk.E)
+
+        self.var_uid = tk.StringVar()
+        self.var_restart = tk.BooleanVar()
+        self.return_uid = ""
+        self.return_restart = False
+
+        self.uid = tk.Entry(self, textvariable=self.var_uid)
+        self.uid.grid(row=0, column=1, pady=10, padx=10, columnspan=2)
+        self.reset = tk.Checkbutton(self, variable=self.var_restart)
+        self.reset.grid(row=1, column=2, pady=5, sticky=tk.W)
+        beginButton = tk.Button(self, text="Begin", command=self.begin)
+        cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
+        beginButton.grid(row=2, column=2, sticky=tk.E, pady=5, padx=5)
+        cancelButton.grid(row=2, column=0, sticky=tk.W, padx=5)
+
+    def begin(self):
+        # Assigning these variables to ensure that the program only continues
+        # if the user clicks "begin"; otherwise program cancels.
+        if self.var_uid.get() == "":
+            messagebox.showwarning("Empty User ID", "User ID is required.")
+        elif inputFolderLoaded():
+            self.return_uid = self.var_uid.get()
+            self.return_restart = self.var_restart.get()
+            self.destroy()
+        else:
+            messagebox.showwarning("Empty Input", "No files in the input directory!")
+
+    def show(self):
+        self.wm_deiconify()
+        self.uid.focus_force()
+        self.wait_window()
+        return self.return_uid, self.return_restart
+
+    def cancel(self):
+        self.destroy()
 
 
 class Dataset(object):
     # To store all our subdatasets throughout our pipeline and manage progress throughout pipeline
 
-    def __init__(self, uid=None, restart=None):
+    def __init__(self, uid=None, restart=None, dialog=True):
         # Get uid if needed
-        if uid != None:
+
+        if dialog:
+            root = tk.Tk()
+            root.title("L.I.R.A.")
+            root.withdraw()
+
+            bd = BeginDialog(root)
+            center_left_window(bd, 264, 108)
+            bd.resizable(False, False)
+            uid, restart = bd.show()
+            root.destroy()
+
+            if uid != "":
+                self.uid = uid
+                self.restart = restart
+            else:
+                print("Exiting Classify")
+                sys.exit()
+
+        if uid is not None:
             self.uid = uid
         else:
             self.uid = input("Input your Unique/User ID for this Dataset: ")
@@ -23,7 +94,7 @@ class Dataset(object):
         self.progress = UserProgress(self.uid)
 
         # Check whether to reload the imgs archive, and possibly restart our progress
-        if restart != None:
+        if restart is not None:
             self.restart = restart
         else:
             self.restart = input(

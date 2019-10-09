@@ -135,12 +135,14 @@ class TypeOneDetectionEditor(object):
                                                                        self.selection_x2, self.selection_y2)
 
         # Get coordinates for a new rectangle outline with this new rectangle
-        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(rect_x1,
-                                                                                                               rect_y1,
-                                                                                                               rect_x2,
-                                                                                                               rect_y2,
-                                                                                                               self.step_h,
-                                                                                                               self.step_w)
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            rect_x1,
+            rect_y1,
+            rect_x2,
+            rect_y2,
+            self.step_h,
+            self.step_w
+        )
 
         # Delete old selection rectangle along with all detection rectangles in this new selection rectangle.
         self.canvas.delete("selection")
