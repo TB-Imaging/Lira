@@ -2,51 +2,11 @@ import sys
 import cv2
 import numpy as np
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-import threading
+import os
 
 from LiraExceptions import InputEmptyError
 from base import *
-from tktools import center_left_window
-import os
-
-
-class AsyncArchive(threading.Thread):
-
-    def __init__(self, tk_root, img_names, archives, archive_dir, img_dir):
-        self.img_names = img_names
-        self.root = tk_root
-        self.archives = archives
-        self.archive_dir = archive_dir
-        self.img_dir = img_dir
-        threading.Thread.__init__(self)
-        self.daemon = True
-        self.progress = ttk.Progressbar(
-            self.root,
-            orient=tk.HORIZONTAL,
-            length=300,
-            mode="determinate",
-        )
-        self.progressText = tk.StringVar()
-        progressLabel = tk.Label(self.root, textvariable=self.progressText)
-        progressLabel.pack(pady=5, padx=10)
-        self.progress.pack(pady=5, padx=10)
-        self.start()
-
-    def run(self):
-        for i, fname in enumerate(self.img_names):
-            self.progressText.set("Archiving Images: {}/{} Complete".format(i, len(self.img_names)))
-            self.progress['value'] = 100 * i / len(self.img_names)
-            self.root.update()
-            sys.stdout.write("\rArchiving Image {}/{}...".format(i + 1, len(self.img_names)))
-
-            # Read src, Check max shape, Create archive at dst, add dst to archive list
-            src_fpath = os.path.join(self.img_dir, fname)
-            dst_fpath = os.path.join(self.archive_dir, "{}.npy".format(i))
-            np.save(dst_fpath, cv2.imread(src_fpath))
-            self.archives.append(dst_fpath)
-        self.root.destroy()
+from ProgressBar import AsyncProgressRoot
 
 
 class Images(object):
@@ -69,22 +29,29 @@ class Images(object):
             """
             # Delete all files in the archive directory if restarting
             clear_dir(self.archive_dir)
-            root = tk.Tk()
-            # progress = ArchiveProgress(root)
             img_names = [name for name in fnames(self.img_dir)]
-            root.title("L.I.R.A.")
-            root.resizable(False, False)
-            center_left_window(root, 320, 57)
 
-            archiver = AsyncArchive(root, img_names, self.archives, self.archive_dir, self.img_dir)
+            # Define a callback to be passed to the Asynchronous Progress Bar
+            def archive_callback(index):
+                i = index
+                fname = img_names[i]
+                sys.stdout.write("\rArchiving Image {}/{}...".format(
+                    i + 1,
+                    len(img_names))
+                )
+                # Read src, Check max shape, Create archive at dst, add dst to archive list
+                src_fpath = os.path.join(self.img_dir, fname)
+                dst_fpath = os.path.join(self.archive_dir, "{}.npy".format(i))
+                np.save(dst_fpath, cv2.imread(src_fpath))
+                self.archives.append(dst_fpath)
 
-            def on_closing():
-                if messagebox.askokcancel("Quit", "Do you want to quit?"):
-                    root.destroy()
-                    # archiver.stop()
-                    sys.exit()
-
-            root.protocol("WM_DELETE_WINDOW", on_closing)
+            # The root process completes the callback's task while keeping track of progress
+            root = AsyncProgressRoot(
+                # root,
+                len(img_names),
+                "Archiving Image",
+                archive_callback
+            )
             root.mainloop()
             sys.stdout.flush()
             print("")
