@@ -12,16 +12,25 @@ from base import *
 from tktools import center_left_window
 
 
-class AsyncArchive(threading.Thread):
+class AsyncProgressBar(threading.Thread):
 
+<<<<<<< HEAD
     def __init__(self, tk_root, img_names, archives):
         self.img_names = img_names
+=======
+    def __init__(self, tk_root):
+>>>>>>> parent of 94139dd... Allow graceful program exit during archiving
         self.root = tk_root
         threading.Thread.__init__(self)
         self.start()
 
     def run(self):
+<<<<<<< HEAD
         self.root.quit()
+=======
+        pass
+
+>>>>>>> parent of 94139dd... Allow graceful program exit during archiving
 
 class Images(object):
     """
@@ -66,10 +75,19 @@ class Images(object):
                     sys.exit()
 
             root.protocol("WM_DELETE_WINDOW", on_closing)
+<<<<<<< HEAD
             for i, fname in enumerate(self.img_names):
                 root.update()
                 progressText.set("Archiving Images: {}/{} Complete".format(i, len(img_names)))
                 progress['value'] = 100 * i / len(img_names)
+=======
+            root.update()
+            for i, fname in enumerate(img_names):
+                # Progress indicator
+                progressText.set("Archiving Images: {}/{} Complete".format(i, len(img_names)))
+                progress['value'] = 100 * i / len(img_names)
+                root.update_idletasks()
+>>>>>>> parent of 94139dd... Allow graceful program exit during archiving
                 root.update()
                 sys.stdout.write("\rArchiving Image {}/{}...".format(i + 1, len(img_names)))
 
@@ -78,9 +96,15 @@ class Images(object):
                 dst_fpath = os.path.join(self.archive_dir, "{}.npy".format(i))
                 np.save(dst_fpath, cv2.imread(src_fpath))
                 self.archives.append(dst_fpath)
+<<<<<<< HEAD
             # archiver = AsyncArchive
             # root.mainloop()
+=======
+
+>>>>>>> parent of 94139dd... Allow graceful program exit during archiving
             sys.stdout.flush()
+            progress.destroy()
+            root.destroy()
             print("")
         else:
             # use existing archive files
