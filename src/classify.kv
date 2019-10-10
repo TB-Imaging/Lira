@@ -3,8 +3,23 @@
 
 <ClassifyWindow>:
     ScreenManager:
+        name: 'screen_manager'
         StartScreen:
+            name: 'start'
         TypeOneScreen:
+            name: 'type_one'
+    Bar:
+        name: 'topbar'
+        id: topbar
+        pos: 0, root.height - barHeight
+        size: root.width, barHeight
+    Bar:
+        name: 'footbar'
+        id: footbar
+        pos: 0, 0
+        size: root.width, barHeight
+
+<StartScreen>:
     FloatLayout:
         canvas:
             Color:
@@ -36,16 +51,25 @@
             disabled: True
             pos: uid_text.pos[0] + uid_text.width - self.width, uid_text.pos[1] - self.height - textInputGap
             on_release: app.beginClassify(uid_text.text.strip(), restart_box.getChecked())
-    Bar:
-        id: topbar
-        pos: 0, root.height - barHeight
-        size: root.width, barHeight
-    Bar:
-        id: footbar
-        pos: 0, 0
-        size: root.width, barHeight
 
-<StartScreen>:
+<TypeOneScreen>:
+    FloatLayout:
+        canvas:
+            Color:
+                rgba: 10/255, 13/255, 30/255, 1
+            Rectangle:
+                size: self.size
+        ScrollView:
+            size_hint: None, None
+            bar_width: 10
+            pos: 0, barHeight
+            size: root.width, root.height - 2 * barHeight
+#            size: 800, 600
+            Image:
+                size_hint: None, None
+                size: 1600, 1200
+                source: '../pics/default-image.jpg'
+
 <CheckBoxBox>:
     size_hint: None, None
     canvas:
