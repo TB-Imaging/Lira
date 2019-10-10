@@ -6,6 +6,7 @@ from keras.models import load_model
 from base import *
 from EditingDataset import EditingDataset
 from TypeOneDetectionEditor import TypeOneDetectionEditor
+from ProgressBar import AsyncProgressRoot
 
 
 class TypeOneDetections(object):
@@ -59,8 +60,9 @@ class TypeOneDetections(object):
         dist = lambda a, b: abs(a - b)
 
         # Generate for each image
-        for img_i, img in enumerate(self.imgs):
-
+        def generate_callback(index):  # img_i, img in enumerate(self.imgs):
+            img_i = index
+            img = self.imgs[img_i]
             # Progress indicator
             sys.stdout.write("\rGenerating Type One Detections on Image {}/{}...".format(img_i, len(self.imgs) - 1))
 
@@ -142,6 +144,14 @@ class TypeOneDetections(object):
             # same.
             self.before_editing[img_i] = detections
             self.after_editing[img_i] = detections
+
+        # img_i, img in enumerate(self.imgs):
+        root = AsyncProgressRoot(
+            len(self.imgs),
+            "Generating Type One Detections for Images",
+            generate_callback
+        )
+        root.mainloop()
 
         # Now that we've finished generating, we've started editing, so we update user progress.
         self.dataset.progress["type_ones_started_editing"] = True

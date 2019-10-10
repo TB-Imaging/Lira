@@ -1,7 +1,6 @@
 import sys
 import cv2
 import numpy as np
-import tkinter as tk
 import os
 
 from LiraExceptions import InputEmptyError
@@ -46,6 +45,7 @@ class Images(object):
                 self.archives.append(dst_fpath)
 
             # The root process completes the callback's task while keeping track of progress
+            print(len(img_names))
             root = AsyncProgressRoot(
                 # root,
                 len(img_names),
