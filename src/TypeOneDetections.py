@@ -6,7 +6,7 @@ from keras.models import load_model
 from base import *
 from EditingDataset import EditingDataset
 from TypeOneDetectionEditor import TypeOneDetectionEditor
-from ProgressBar import AsyncProgressRoot
+from ProgressBar import ProgressRoot
 
 
 class TypeOneDetections(object):
@@ -146,9 +146,9 @@ class TypeOneDetections(object):
             self.after_editing[img_i] = detections
 
         # img_i, img in enumerate(self.imgs):
-        root = AsyncProgressRoot(
+        root = ProgressRoot(
             len(self.imgs),
-            "Generating Type One Detections for Images",
+            "Generating Type Ones",
             generate_callback
         )
         root.mainloop()

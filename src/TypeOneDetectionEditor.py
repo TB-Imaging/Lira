@@ -2,6 +2,7 @@ import sys
 import cv2
 
 from tkinter import *
+from tkinter import messagebox
 from PIL import ImageTk, Image
 
 from gui_base import *
@@ -24,6 +25,8 @@ class TypeOneDetectionEditor(object):
 
         # Window + Frame
         self.window = Tk()
+        self.window.title('L.I.R.A.')
+        self.window.protocol("WM_DELETE_WINDOW", self.q_key_press)
         self.frame = Frame(self.window, bd=5, relief=SUNKEN)
         self.frame.grid(row=0, column=0)
 
@@ -48,6 +51,24 @@ class TypeOneDetectionEditor(object):
         vbar = Scrollbar(self.frame, orient=VERTICAL)
         vbar.pack(side=RIGHT, fill=Y)
         vbar.config(command=self.canvas.yview)
+
+        buttonFrame = Frame(self.window, bd=5)
+        finishButton = Button(buttonFrame, text="Continue", command=self.finish_button_press)
+        quitButton = Button(buttonFrame, text="Quit", command=self.q_key_press)
+
+        leftrightFrame = Frame(buttonFrame)
+        self.leftButton = Button(leftrightFrame, text="◀", command=self.left_arrow_key_press)
+        self.rightButton = Button(leftrightFrame, text="▶", command=self.right_arrow_key_press)
+
+        buttonFrame.grid(row=1, column=0, sticky=W+E)
+        quitButton.pack(side=LEFT)
+        finishButton.pack(side=RIGHT)
+        leftrightFrame.pack()
+        # begin with the leftButton hidden, and only show the rightButton if there are multiple
+        # images
+        if len(self.dataset.imgs) > 1:
+            self.rightButton.pack(side=RIGHT)
+
         self.canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 
         # Img + Event listeners
@@ -200,13 +221,16 @@ class TypeOneDetectionEditor(object):
             # scroll up
             self.canvas.yview_scroll(1, "units")
 
-    def left_arrow_key_press(self, event):
+    def left_arrow_key_press(self, event=None):
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
 
         if self.dataset.progress["type_ones_image"] > 0:
             # Change current editing image
             self.dataset.progress["type_ones_image"] -= 1
-
+            if self.dataset.progress["type_ones_image"] == 0:
+                self.leftButton.pack_forget()
+            if self.dataset.progress["type_ones_image"] == len(self.dataset.imgs) - 2:
+                self.rightButton.pack(side=RIGHT)
             # Reload self.img and self.detections
             self.reload_img_and_detections()
 
@@ -218,11 +242,15 @@ class TypeOneDetectionEditor(object):
             self.canvas.delete("detection")
             self.update_detections()
 
-    def right_arrow_key_press(self, event):
+    def right_arrow_key_press(self, event=None):
         # Move to the image with index i+1, unless i = img #-1, in which case we do nothing. AKA the next image.
         if self.dataset.progress["type_ones_image"] < len(self.dataset.imgs) - 1:
             # Change current editing image
             self.dataset.progress["type_ones_image"] += 1
+            if self.dataset.progress["type_ones_image"] == len(self.dataset.imgs) - 1:
+                self.rightButton.pack_forget()
+            if self.dataset.progress["type_ones_image"] == 1:
+                self.leftButton.pack(side=LEFT)
 
             # Reload self.img and self.detections
             self.reload_img_and_detections()
@@ -235,24 +263,31 @@ class TypeOneDetectionEditor(object):
             self.canvas.delete("detection")
             self.update_detections()
 
-    def q_key_press(self, event):
-        # (Quit) We close the editor and prompt them for if they are finished with editing or not. If they're not
-        # finished we do nothing.
-        self.window.destroy()
-        if input(
-                "Your type one detection editing session has been ended. Would you like to continue? Once you continue, your edits can not be undone. [Y\\N]: ").upper() == 'Y':
-            # save this user's progress as finished editing so that we will stop the type one detection editing phase
-            # for this user.
+    def q_key_press(self, event=None):
+        if messagebox.askquestion(
+            'Quit',
+            'Would you like to quit?'
+        ) == 'yes':
+            sys.exit('Exiting...')
+
+    def finish_button_press(self, event=None):
+        # (Finish) We prompt them for if they are finished with editing or not. If they're not
+        # finished we do nothing, otherwise we move to the next step.
+        if messagebox.askquestion(
+                'Continue',
+                'Would you like to continue to the next step? Once you continue, '
+                'your type one edits can not be undone.'
+        ) == 'yes':
+            self.window.destroy()
             self.dataset.progress["type_ones_finished_editing"] = True
-        else:
-            # Otherwise they wanna quit so quit
-            sys.exit("Exiting...")
 
     def key_press(self, event):
         # Hub for all key press events.
         c = event.char.upper()
         if c == "Q":
             self.q_key_press(event)
+        # elif c == "N":
+        #     self.n_key_press(event)
 
     # The following functions are helper functions specific to this editor. All other GUI helpers are in the
     # gui_base.py file.
