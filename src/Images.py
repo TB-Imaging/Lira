@@ -5,7 +5,7 @@ import os
 
 from LiraExceptions import InputEmptyError
 from base import *
-from ProgressBar import AsyncProgressRoot
+from ProgressBar import ProgressRoot
 
 
 class Images(object):
@@ -46,7 +46,7 @@ class Images(object):
 
             # The root process completes the callback's task while keeping track of progress
             print(len(img_names))
-            root = AsyncProgressRoot(
+            root = ProgressRoot(
                 # root,
                 len(img_names),
                 "Archiving Image",
