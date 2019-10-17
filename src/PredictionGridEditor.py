@@ -3,6 +3,7 @@ import sys
 import cv2
 import numpy as np
 from tkinter import *
+from tkinter import messagebox
 from PIL import ImageTk, Image
 
 from gui_base import *
@@ -13,11 +14,17 @@ class PredictionGridEditor(object):
         #Initialize our editor on this user's last edited image
         self.dataset = dataset
 
-        #Ask them if they want to change the current values for resize and transparency
-        if input("Would you like to change the transparency and resize factors from their current values? (These are the default values if you have not started editing) [Y\\N]: ").upper()=="Y":
+        # Ask them if they want to change the current values for resize and transparency if
+        # input("Would you like to
+        # change the transparency and resize factors from their current values? (These are the default values if you
+        # have not started editing) [Y\\N]: ").upper()=="Y":
+        if messagebox.askyesno("Would you like to change the transparency and resize factors from their current "
+                               "values? (These are the default values if you have not started editing)") == "yes":
             #Get resize factor and ensure it's a float 
             while True:
-                self.editor_resize_factor = input("Input your Resize Factor (between 0 and 1) to scale the images by. Higher the value means higher resolution, and vice versa: ")
+                self.editor_resize_factor = input("Input your Resize Factor (between 0 and 1) to scale the images by. "
+                                                  "Higher the value means higher resolution, and vice versa: ")
+                self.editor_resize_factor = messagebox.a
                 if is_float(self.editor_resize_factor):
                     self.editor_resize_factor = float(self.editor_resize_factor)
                     if (self.editor_resize_factor <= 0 or 1 < self.editor_resize_factor):
@@ -29,7 +36,9 @@ class PredictionGridEditor(object):
 
             #Get transparency factor and ensure it's a float 
             while True:
-                self.editor_transparency_factor = input("Input your Transparency Factor (between 0 and 1) to control the transparency of the colored classifications. Higher the value means higher opacity, and vice versa: ")
+                self.editor_transparency_factor = input("Input your Transparency Factor (between 0 and 1) to control "
+                                                        "the transparency of the colored classifications. Higher the "
+                                                        "value means higher opacity, and vice versa: ")
                 if is_float(self.editor_transparency_factor):
                     self.editor_transparency_factor = float(self.editor_transparency_factor)
                     if (self.editor_transparency_factor < 0 or 1 < self.editor_transparency_factor):
