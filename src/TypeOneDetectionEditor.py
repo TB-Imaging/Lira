@@ -41,7 +41,8 @@ class TypeOneDetectionEditor(object):
             self.dataset.imgs.max_shape()[
                 1] * self.editor_resize_factor,
             self.dataset.imgs.max_shape()[
-                0] * self.editor_resize_factor)
+                0] * self.editor_resize_factor),
+            cursor="crosshair"
         )
 
         # Scrollbars

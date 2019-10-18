@@ -82,8 +82,7 @@ class Dataset(object):
                 self.uid = uid
                 self.restart = restart
             else:
-                print("Exiting Classify")
-                sys.exit()
+                sys.exit("Exiting...")
 
         if uid is not None:
             self.uid = uid

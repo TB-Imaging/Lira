@@ -1,4 +1,6 @@
+from tkinter import messagebox
 from Dataset import Dataset
+
 
 #Main function to put all images through our classification pipeline. Returns the dataset used during the pipeline.
 def classify():
@@ -9,4 +11,4 @@ def classify():
     return dataset
 
 classify()
-
+messagebox.showinfo(title="L.I.R.A. Finished", message="All results have been generated. The program will now close.")
