@@ -92,6 +92,7 @@ class PredictionGridEditor(object):
                                    "Type I - Rim", "Unknown/Misc."]
         self.color_key = [(255, 0, 255), (0, 0, 255), (0, 255, 0), (200, 200, 200), (0, 255, 255), (255, 0, 0),
                           (244, 66, 143)]
+        self.color_index = -1
         self.title = "L.I.R.A. Prediction Grid Editing"
 
         # Img + Predictions
@@ -116,6 +117,10 @@ class PredictionGridEditor(object):
 
         # Create side canvas
         self.side_canvas = Canvas(self.frame, bg="#000000", width=1366, height=68)
+
+        self.palette = Frame(self.frame)
+        self.palette.pack(side=RIGHT)
+        # label = Label(self.palette).pack()
 
         # Scrollbars
         hbar = Scrollbar(self.main_canvas_frame, orient=HORIZONTAL)
@@ -164,6 +169,10 @@ class PredictionGridEditor(object):
         self.main_canvas.bind("<Right>", self.right_arrow_key_press)
         self.main_canvas.bind("<Key>", self.key_press)
         self.main_canvas.pack(side=TOP)
+        self.paletteButtons = []
+
+        def change_color(i):
+            return lambda: self.changeColor(i)
 
         # Side Canvas
         for i, (classification, color) in enumerate(zip(self.classification_key, self.color_key)):
@@ -185,7 +194,14 @@ class PredictionGridEditor(object):
             # Then we generate our colored label string to include the keyboard shortcut for this classification
             label_str = "Key {}: {}".format(i + 1, classification)
             color_label = Label(self.side_canvas, text=label_str, bg=hex_color_str, fg=text_color, anchor="w")
+            color_cmd = change_color(i)
+
+            self.paletteButtons.append(
+                Button(self.palette, text=classification, bg=hex_color_str, fg=text_color, relief=FLAT,
+                       command=color_cmd)
+            )
             color_label.pack(fill=X)
+            self.paletteButtons[i].pack(fill=X)
 
         # Add left mouse and right mouse
         left_mouse_label = Label(self.side_canvas, text="Left Mouse: Select sections for changing classification",
@@ -209,6 +225,12 @@ class PredictionGridEditor(object):
 
         # Predictions and start
         self.window.mainloop()
+
+    def changeColor(self, index):
+        if self.color_index > -1:
+            self.paletteButtons[self.color_index].config(relief=FLAT, state=NORMAL)
+        self.paletteButtons[index].config(relief=SUNKEN, state=DISABLED)
+        self.color_index = index
 
     # The following functions are event handlers for our editing window.
     def mouse_click(self, event):
@@ -355,7 +377,8 @@ class PredictionGridEditor(object):
             # Reload self.img and self.prediction_grid
             self.reload_img_and_predictions()
 
-            # Reload image displayed on canvas and predictions displayed on canvas with self.img and self.prediction_grids
+            # Reload image displayed on canvas and predictions displayed on canvas with self.img and
+            # self.prediction_grids
             self.main_canvas.image = ImageTk.PhotoImage(
                 Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
             self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
