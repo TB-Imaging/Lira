@@ -2,6 +2,7 @@ import sys
 
 import cv2
 import numpy as np
+import os
 from tkinter import *
 from tkinter import messagebox
 from PIL import ImageTk, Image
@@ -95,6 +96,12 @@ class PredictionGridEditor(object):
         self.color_index = -1
         self.title = "L.I.R.A. Prediction Grid Editing"
 
+        self.tools = ["brush", "draw-square", "paint-bucket", "zoom"]
+        self.tool_cursors = ["pencil", "crosshair", "coffee_mug", "target"]
+        self.tool_icons = ["pencil-alt-solid.png", "edit-solid.png", "fill-drip-solid.png", "search-plus-solid.png"]
+        self.tool_index = -1
+        base_dir = os.path.dirname(os.getcwd())
+        icon_dir = os.path.join(base_dir, 'icons')
         # Img + Predictions
         self.reload_img_and_predictions()
 
@@ -112,15 +119,13 @@ class PredictionGridEditor(object):
             width=1366,
             height=700,
             scrollregion=(0, 0, self.dataset.imgs.max_shape()[1], self.dataset.imgs.max_shape()[0]),
-            cursor="crosshair"
         )
 
-        # Create side canvas
-        self.side_canvas = Canvas(self.frame, bg="#000000", width=1366, height=68)
-
+        # Create palette and toolbar
+        self.toolbar = Frame(self.frame)
+        self.toolbar.pack(side=LEFT)
         self.palette = Frame(self.frame)
-        self.palette.pack(side=RIGHT)
-        # label = Label(self.palette).pack()
+        self.palette.pack(side=LEFT)
 
         # Scrollbars
         hbar = Scrollbar(self.main_canvas_frame, orient=HORIZONTAL)
@@ -169,11 +174,29 @@ class PredictionGridEditor(object):
         self.main_canvas.bind("<Right>", self.right_arrow_key_press)
         self.main_canvas.bind("<Key>", self.key_press)
         self.main_canvas.pack(side=TOP)
+
+        self.toolButtons = []
+        self.iconImages = []
+        icon_color_str = "#%02x%02x%02x" % (180, 180, 180)
+
+        def change_tool(index):
+            return lambda: self.changeTool(index)
+
+        for i, icon in enumerate(self.tool_icons):
+            icon_path = os.path.join(icon_dir, icon)
+            icon_img = Image.open(icon_path)
+            icon_img = icon_img.resize((20, 20), Image.ANTIALIAS)
+            icon_img = ImageTk.PhotoImage(icon_img)
+            self.iconImages.append(icon_img)
+            tool_cmd = change_tool(i)
+            self.toolButtons.append(
+                Button(self.toolbar, relief=FLAT, command=tool_cmd, bg=icon_color_str, image=self.iconImages[i])
+            )
+            self.toolButtons[i].pack()
         self.paletteButtons = []
 
-        def change_color(i):
-            return lambda: self.changeColor(i)
-
+        def change_color(index):
+            return lambda: self.changeColor(index)
         # Side Canvas
         for i, (classification, color) in enumerate(zip(self.classification_key, self.color_key)):
             # Since our colors are in BGR, and tkinter only accepts hex, we have to create a hex string for them,
@@ -183,7 +206,7 @@ class PredictionGridEditor(object):
 
             # We then check get the color's brightness using the relative luminance algorithm
             # https://en.wikipedia.org/wiki/Relative_luminance
-            color_brightness = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            color_brightness = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
             if color_brightness < 0.5:
                 # Dark color, bright font.
                 text_color = "white"
@@ -192,27 +215,19 @@ class PredictionGridEditor(object):
                 text_color = "black"
 
             # Then we generate our colored label string to include the keyboard shortcut for this classification
-            label_str = "Key {}: {}".format(i + 1, classification)
-            color_label = Label(self.side_canvas, text=label_str, bg=hex_color_str, fg=text_color, anchor="w")
             color_cmd = change_color(i)
 
+            button_str = "{}: {}".format(i, classification)
             self.paletteButtons.append(
-                Button(self.palette, text=classification, bg=hex_color_str, fg=text_color, relief=FLAT,
+                Button(self.palette, text=button_str, bg=hex_color_str, fg=text_color, relief=FLAT,
                        command=color_cmd)
             )
-            color_label.pack(fill=X)
-            self.paletteButtons[i].pack(fill=X)
+            if i < 4:
+                self.paletteButtons[i].grid(sticky=W+E, row=i, column=0)
+            else:
+                self.paletteButtons[i].grid(sticky=W+E, row=i-4, column=1)
 
         # Add left mouse and right mouse
-        left_mouse_label = Label(self.side_canvas, text="Left Mouse: Select sections for changing classification",
-                                 bg="#FFFFFF", fg="#000000", anchor="w")
-        left_mouse_label.pack(fill=X)
-        right_mouse_label = Label(self.side_canvas,
-                                  text="Right Mouse: Select sections for full-resolution view (keep the sections "
-                                       "small for better performance)",
-                                  bg="#000000", fg="#FFFFFF", anchor="w")
-        right_mouse_label.pack(fill=X)
-        self.side_canvas.pack(side=BOTTOM, anchor="sw")
 
         # Keeping track of which mouse button is currently held down
         self.left_mouse = False
@@ -231,6 +246,13 @@ class PredictionGridEditor(object):
             self.paletteButtons[self.color_index].config(relief=FLAT, state=NORMAL)
         self.paletteButtons[index].config(relief=SUNKEN, state=DISABLED)
         self.color_index = index
+
+    def changeTool(self, index):
+        if self.tool_index > -1:
+            self.toolButtons[self.tool_index].config(relief=FLAT, state=NORMAL)
+        self.toolButtons[index].config(relief=SUNKEN, state=DISABLED)
+        self.tool_index = index
+        self.main_canvas.config(cursor=self.tool_cursors[index])
 
     # The following functions are event handlers for our editing window.
     def mouse_click(self, event):
