@@ -93,10 +93,10 @@ class PredictionGridEditor(object):
                                    "Type I - Rim", "Unknown/Misc."]
         self.color_key = [(255, 0, 255), (0, 0, 255), (0, 255, 0), (200, 200, 200), (0, 255, 255), (255, 0, 0),
                           (244, 66, 143)]
-        self.color_index = -1
+        self.color_index = 3
         self.title = "L.I.R.A. Prediction Grid Editing"
 
-        self.tools = ["brush", "draw-square", "paint-bucket", "zoom"]
+        self.tools = ["pencil", "draw-square", "paint-bucket", "zoom"]
         self.tool_cursors = ["pencil", "crosshair", "coffee_mug", "target"]
         self.tool_icons = ["pencil-alt-solid.png", "edit-solid.png", "fill-drip-solid.png", "search-plus-solid.png"]
         self.tool_index = -1
@@ -162,12 +162,6 @@ class PredictionGridEditor(object):
         self.main_canvas_image_config = self.main_canvas.create_image(0, 0, image=self.main_canvas.image,
                                                                       anchor="nw")  # So we can change the image later
         self.main_canvas.focus_set()
-        self.main_canvas.bind("<Button 1>", self.mouse_click)
-        self.main_canvas.bind("<Button 3>", self.mouse_click)
-        self.main_canvas.bind("<B1-Motion>", self.mouse_move)
-        self.main_canvas.bind("<B3-Motion>", self.mouse_move)
-        self.main_canvas.bind("<ButtonRelease-1>", self.mouse_left_release)
-        self.main_canvas.bind("<ButtonRelease-3>", self.mouse_right_release)
         self.main_canvas.bind_all("<Button-4>", self.mouse_scroll)  # Scrollwheel for entire editor
         self.main_canvas.bind_all("<Button-5>", self.mouse_scroll)  # Scrollwheel for entire editor
         self.main_canvas.bind("<Left>", self.left_arrow_key_press)
@@ -192,6 +186,8 @@ class PredictionGridEditor(object):
             self.toolButtons.append(
                 Button(self.toolbar, relief=FLAT, command=tool_cmd, bg=icon_color_str, image=self.iconImages[i])
             )
+            if i == self.tool_index:
+                self.toolButtons[i].config(relief=SUNKEN, state=DISABLED)
             self.toolButtons[i].pack()
         self.paletteButtons = []
 
@@ -222,6 +218,8 @@ class PredictionGridEditor(object):
                 Button(self.palette, text=button_str, bg=hex_color_str, fg=text_color, relief=FLAT,
                        command=color_cmd)
             )
+            if i == self.color_index:
+                self.paletteButtons[i].config(relief=SUNKEN, state=DISABLED)
             if i < 4:
                 self.paletteButtons[i].grid(sticky=W+E, row=i, column=0)
             else:
@@ -253,9 +251,35 @@ class PredictionGridEditor(object):
         self.toolButtons[index].config(relief=SUNKEN, state=DISABLED)
         self.tool_index = index
         self.main_canvas.config(cursor=self.tool_cursors[index])
+        # "pencil", "draw-square", "paint-bucket", "zoom"
+        if self.tools[index] == "pencil":
+            self.main_canvas.bind("<Button 1>", self.pencil_click)  # mouse_click
+            self.main_canvas.bind("<B1-Motion>", self.pencil_move)  # mouse_move
+            self.main_canvas.unbind("<ButtonRelease-1>")
+        elif self.tools[index] == "draw-square":
+            self.main_canvas.bind("<Button 1>", self.draw_square_click)  # mouse_click
+            self.main_canvas.bind("<B1-Motion>", self.draw_square_move)  # mouse_move
+            self.main_canvas.bind("<ButtonRelease-1>", self.draw_square_release)  # mouse_left_release
+        elif self.tools[index] == "paint-bucket":
+            self.main_canvas.bind("<Button 1>", self.paint_bucket_click)  # mouse_click
+            self.main_canvas.unbind("<B1-Motion>")
+            self.main_canvas.unbind("<ButtonRelease-1>")
+        elif self.tools[index] == "zoom":
+            self.main_canvas.bind("<Button 1>", self.zoom_click)  # mouse_click
+            self.main_canvas.bind("<B1-Motion>", self.zoom_move)  # mouse_move
+            self.main_canvas.bind("<ButtonRelease-1>", self.zoom_release)  # mouse_left_release
+        # self.main_canvas.bind("<Button 3>", self.mouse_click)
+        # self.main_canvas.bind("<B3-Motion>", self.mouse_move)
+        # self.main_canvas.bind("<ButtonRelease-3>", self.mouse_right_release)
 
     # The following functions are event handlers for our editing window.
-    def mouse_click(self, event):
+    def pencil_click(self, event):
+        pass
+
+    def pencil_move(self, event):
+        pass
+
+    def draw_square_click(self, event):
         # Start a selection rect.
         # Our rectangle selections can only be made up of small rectangles of size sub_h*sub_w, so that we lock on to areas in these step sizes to allow easier rectangle selection.
 
@@ -265,18 +289,10 @@ class PredictionGridEditor(object):
         # Get coordinates for a rectangle outline with this point as both top-left and bot-right of the rectangle and draw it
         outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
             self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
-        if event.num == 1:
-            # Left Mouse Click
-            self.left_click = True
-            self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
-                                              fill='', outline="darkRed", width=2, tags="classification_selection")
-        else:
-            # Right Mouse Click
-            self.left_click = False
-            self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
-                                              fill='', outline="darkBlue", width=2, tags="view_selection")
+        self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
+                                          fill='', outline="darkRed", width=2, tags="classification_selection")
 
-    def mouse_move(self, event):
+    def draw_square_move(self, event):
         # Move the selection rect. Our rectangle selections can only be made up of small rectangles of size
         # sub_h*sub_w, so that we lock on to areas in these step sizes to allow easier rectangle selection.
 
@@ -298,17 +314,12 @@ class PredictionGridEditor(object):
         )
 
         # Delete old selection rectangle and draw new one with this new rectangle outline
-        if self.left_click:
-            # Left Mouse Move
-            self.main_canvas.delete("classification_selection")
-            self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
-                                              fill='', outline="darkRed", width=2, tags="classification_selection")
-        else:
-            self.main_canvas.delete("view_selection")
-            self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
-                                              fill='', outline="darkBlue", width=2, tags="view_selection")
+        # Left Mouse Move
+        self.main_canvas.delete("classification_selection")
+        self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
+                                          fill='', outline="darkRed", width=2, tags="classification_selection")
 
-    def mouse_left_release(self, event):
+    def draw_square_release(self, event):
         # Set the selection rect and save its location for referencing our prediction grid. Our rectangle selections
         # can only be made up of small rectangles of size sub_h*sub_w, so that we lock on to areas in these step
         # sizes to allow easier rectangle selection.
@@ -321,12 +332,14 @@ class PredictionGridEditor(object):
                                                                        self.selection_x2, self.selection_y2)
 
         # Get coordinates for a new rectangle outline with this new rectangle
-        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(rect_x1,
-                                                                                                               rect_y1,
-                                                                                                               rect_x2,
-                                                                                                               rect_y2,
-                                                                                                               self.sub_h,
-                                                                                                               self.sub_w)
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            rect_x1,
+            rect_y1,
+            rect_x2,
+            rect_y2,
+            self.sub_h,
+            self.sub_w
+        )
 
         # Delete old selection rectangle and draw new finalized selection rectangle at this position
         self.main_canvas.delete("classification_selection")
@@ -340,7 +353,55 @@ class PredictionGridEditor(object):
         self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w)
         self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h)
 
-    def mouse_right_release(self, event):
+        self.fill_selected_area()
+        self.main_canvas.delete("classification_selection")
+
+    def paint_bucket_click(self, event):
+        pass
+
+    def zoom_click(self, event):
+        # Start a selection rect. Our rectangle selections can only be made up of small rectangles of size
+        # sub_h*sub_w, so that we lock on to areas in these step sizes to allow easier rectangle selection.
+
+        # Get coordinates on canvas for beginning of this selection, (x1, y1)
+        self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)
+
+        # Get coordinates for a rectangle outline with this point as both top-left and bot-right of the rectangle and
+        # draw it
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
+        # Right Mouse Click
+        self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
+                                          fill='', outline="darkBlue", width=2, tags="view_selection")
+
+    def zoom_move(self, event):
+        # Move the selection rect. Our rectangle selections can only be made up of small rectangles of size
+        # sub_h*sub_w, so that we lock on to areas in these step sizes to allow easier rectangle selection.
+
+        # Get coordinates on canvas for the current end of this selection, (x2, y2)
+        self.selection_x2, self.selection_y2 = get_canvas_coordinates(event)
+
+        # Get rectangle coordinates from our initial mouse click point to this point
+        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(self.selection_x1, self.selection_y1,
+                                                                       self.selection_x2, self.selection_y2)
+
+        # Get coordinates for a new rectangle outline with this new rectangle
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            rect_x1,
+            rect_y1,
+            rect_x2,
+            rect_y2,
+            self.sub_h,
+            self.sub_w
+        )
+
+        # Delete old selection rectangle and draw new one with this new rectangle outline
+        # Left Mouse Move
+        self.main_canvas.delete("view_selection")
+        self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
+                                          fill='', outline="darkBlue", width=2, tags="view_selection")
+
+    def zoom_release(self, event):
         # Set the selection rect and open up the selected area in a separate window at full resolution. Our rectangle
         # selections can only be made up of small rectangles of size sub_h*sub_w, so that we lock on to areas in
         # these step sizes to allow easier rectangle selection.
@@ -367,6 +428,7 @@ class PredictionGridEditor(object):
 
         # Open up a separate window and display the full-resolution version of the selection
         self.display_image_section(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2)
+        self.main_canvas.delete("view_selection")
 
     def mouse_scroll(self, event):
         if event.num == 4:
@@ -445,13 +507,13 @@ class PredictionGridEditor(object):
             self.window.title("{} - Image {}/{}".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
                                                         len(self.dataset.prediction_grids.before_editing)))
 
-    def classification_key_press(self, event):
-        # Change currently selected area to this classification.
-        # We update the prediction grid, but we also update the display by extracting the selected section and updating the overlay of only that section, because updating the entire image is very expensive and should be avoided.
-        # First get the classification index
-        i = int(event.char) - 1
-
-        # Update predictions referenced by our current classification_selection rectangle to this index and get the prediction grid section that was updated
+    def fill_selected_area(self):
+        # Change currently selected area to this classification. We update the prediction grid, but we also update
+        # the display by extracting the selected section and updating the overlay of only that section,
+        # because updating the entire image is very expensive and should be avoided. First get the classification index
+        i = self.color_index
+        # Update predictions referenced by our current classification_selection rectangle to this index and get the
+        # prediction grid section that was updated
         self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
         self.prediction_rect_x1:self.prediction_rect_x2] = i
         self.prediction_grid_section = self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
@@ -460,7 +522,8 @@ class PredictionGridEditor(object):
         # Save updated predictions
         self.dataset.prediction_grids.after_editing[
             self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
-        # Load the resized image section (without any overlay) referenced by our current classification_selection rectangle (no need to cast to int b/c int*int = int)
+        # Load the resized image section (without any overlay) referenced by our current classification_selection
+        # rectangle (no need to cast to int b/c int*int = int)
         self.img_section = self.resized_img[self.prediction_rect_y1 * self.sub_h:self.prediction_rect_y2 * self.sub_h,
                            self.prediction_rect_x1 * self.sub_w:self.prediction_rect_x2 * self.sub_w]
 
@@ -508,16 +571,6 @@ class PredictionGridEditor(object):
         c = event.char.upper()
         if c == "Q":
             self.q_key_press(event)
-        else:
-            # Check if a classification key
-            try:
-                if (1 <= int(c) and int(c) <= len(self.classification_key)):
-                    # Is a valid classification key, call handler
-                    self.classification_key_press(event)
-            except:
-                # Not an int
-                pass
-
         # Classification keys should remove the rectangle
 
     # The following functions are helper functions specific to this editor. All other GUI helpers are in the gui_base.py file.
