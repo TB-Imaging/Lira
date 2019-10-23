@@ -253,7 +253,7 @@ class PredictionGridEditor(object):
         self.main_canvas.config(cursor=self.tool_cursors[index])
         # "pencil", "draw-square", "paint-bucket", "zoom"
         if self.tools[index] == "pencil":
-            self.main_canvas.bind("<Button 1>", self.pencil_click)  # mouse_click
+            self.main_canvas.bind("<Button 1>", self.pencil_move)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.pencil_move)  # mouse_move
             self.main_canvas.unbind("<ButtonRelease-1>")
         elif self.tools[index] == "draw-square":
@@ -273,11 +273,32 @@ class PredictionGridEditor(object):
         # self.main_canvas.bind("<ButtonRelease-3>", self.mouse_right_release)
 
     # The following functions are event handlers for our editing window.
-    def pencil_click(self, event):
-        pass
-
     def pencil_move(self, event):
-        pass
+
+        self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)# Get rectangle coordinates from our initial mouse click point to this point
+        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(
+            self.selection_x1, self.selection_y1,
+            self.selection_x1, self.selection_y1
+        )
+
+        # Get coordinates for a new rectangle outline with this new rectangle
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            rect_x1,
+            rect_y1,
+            rect_x2,
+            rect_y2,
+            self.sub_h,
+            self.sub_w
+        )
+        self.prediction_rect_x1 = int(outline_rect_x1 / self.sub_w)
+        self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h)
+        self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w)
+        self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h)
+
+        self.fill_selected_area()
+
+    # def pencil_move(self, event):
+    #     pass
 
     def draw_square_click(self, event):
         # Start a selection rect.
@@ -300,8 +321,10 @@ class PredictionGridEditor(object):
         self.selection_x2, self.selection_y2 = get_canvas_coordinates(event)
 
         # Get rectangle coordinates from our initial mouse click point to this point
-        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(self.selection_x1, self.selection_y1,
-                                                                       self.selection_x2, self.selection_y2)
+        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(
+            self.selection_x1,self.selection_y1,
+            self.selection_x2, self.selection_y2
+        )
 
         # Get coordinates for a new rectangle outline with this new rectangle
         outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
@@ -357,7 +380,10 @@ class PredictionGridEditor(object):
         self.main_canvas.delete("classification_selection")
 
     def paint_bucket_click(self, event):
-        pass
+        # Get coordinates on canvas for beginning of this selection, (x1, y1)
+        self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
 
     def zoom_click(self, event):
         # Start a selection rect. Our rectangle selections can only be made up of small rectangles of size
@@ -522,6 +548,11 @@ class PredictionGridEditor(object):
         # Save updated predictions
         self.dataset.prediction_grids.after_editing[
             self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
+
+        # if the rectangle is flat in either dimension, nothing should happen.
+        if self.prediction_rect_y2 == self.prediction_rect_y1 or self.prediction_rect_x2 == self.prediction_rect_x1:
+            return
+
         # Load the resized image section (without any overlay) referenced by our current classification_selection
         # rectangle (no need to cast to int b/c int*int = int)
         self.img_section = self.resized_img[self.prediction_rect_y1 * self.sub_h:self.prediction_rect_y2 * self.sub_h,
@@ -537,6 +568,7 @@ class PredictionGridEditor(object):
                               (col_i * self.sub_w + self.sub_w, row_i * self.sub_h + self.sub_h), color, -1)
 
         # Combine the overlay section and the image section
+        before_img_section = self.img_section
         self.img_section = weighted_overlay(self.img_section, self.prediction_overlay_section,
                                             self.editor_transparency_factor)
         self.img_section = cv2.cvtColor(self.img_section,
