@@ -404,7 +404,6 @@ class PredictionGridEditor(object):
         self.fill_bound_y1 = self.prediction_rect_y1
         self.fill_bound_y2 = self.prediction_rect_y2
 
-        print(self.prediction_grid.shape)
         try:
             self.fill_adjacent(square_color_i, self.prediction_rect_x1, self.prediction_rect_x2,
                                self.prediction_rect_y1, self.prediction_rect_y2)
