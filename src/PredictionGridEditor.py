@@ -383,7 +383,97 @@ class PredictionGridEditor(object):
         # Get coordinates on canvas for beginning of this selection, (x1, y1)
         self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)
         outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
-            self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
+        self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
+
+        self.prediction_rect_x1 = int(outline_rect_x1 / self.sub_w)
+        self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h)
+        self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w)
+        self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h)
+        if self.prediction_rect_x1 == self.prediction_rect_x2:
+            self.prediction_rect_x2 += 1
+        if self.prediction_rect_y1 == self.prediction_rect_y2:
+            self.prediction_rect_y2 += 1
+        i = self.color_index
+        square_color_i = self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
+        self.prediction_rect_x1:self.prediction_rect_x2][0][0]
+        # print(square_color_i)
+
+        # Save updated predictions
+        self.fill_bound_x1 = self.prediction_rect_x1
+        self.fill_bound_x2 = self.prediction_rect_x2
+        self.fill_bound_y1 = self.prediction_rect_y1
+        self.fill_bound_y2 = self.prediction_rect_y2
+
+        print(self.prediction_grid.shape)
+        try:
+            self.fill_adjacent(square_color_i, self.prediction_rect_x1, self.prediction_rect_x2,
+                               self.prediction_rect_y1, self.prediction_rect_y2)
+        except RecursionError:
+            pass
+        self.dataset.prediction_grids.after_editing[
+            self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
+        img_section = self.resized_img[
+                          self.fill_bound_y1 * self.sub_h:self.fill_bound_y2 * self.sub_h,
+                          self.fill_bound_x1 * self.sub_w:self.fill_bound_x2 * self.sub_w
+                      ]
+        prediction_grid_section = self.prediction_grid[
+                                      self.fill_bound_y1:self.fill_bound_y2,
+                                      self.fill_bound_x1:self.fill_bound_x2
+                                  ]
+        prediction_overlay_section = np.zeros_like(img_section)
+        for row_i, row in enumerate(prediction_grid_section):
+            for col_i, col in enumerate(row):
+                color = self.color_key[col]
+                # draw rectangles of the resized sub_hxsub_w size on it
+                cv2.rectangle(
+                    prediction_overlay_section,
+                    (col_i * self.sub_w, row_i * self.sub_h),
+                    (col_i * self.sub_w + self.sub_w, row_i * self.sub_h + self.sub_h),
+                    color,
+                    -1
+                )
+
+        img_section = weighted_overlay(img_section, prediction_overlay_section,
+                                       self.editor_transparency_factor)
+        img_section = cv2.cvtColor(img_section,
+                                   cv2.COLOR_BGR2RGB)
+        self.img[self.fill_bound_y1 * self.sub_h:self.fill_bound_y2 * self.sub_h,
+        self.fill_bound_x1 * self.sub_w:self.fill_bound_x2 * self.sub_w] = img_section
+
+        # And finally update the canvas
+        self.main_canvas.image = ImageTk.PhotoImage(
+            Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
+
+    def fill_adjacent(self, color_i, rect_x1, rect_x2, rect_y1, rect_y2):
+        new_i = self.color_index
+        if color_i == new_i:
+            return
+        if rect_x1 < 0 or rect_y1 < 0 or \
+            rect_x2 > self.prediction_grid.shape[1] or rect_y2 > self.prediction_grid.shape[0]:
+            return
+        if self.fill_bound_x1 > rect_x1:
+            self.fill_bound_x1 = rect_x1
+        if self.fill_bound_x2 < rect_x2:
+            self.fill_bound_x2 = rect_x2
+        if self.fill_bound_y1 > rect_y1:
+            self.fill_bound_y1 = rect_y1
+        if self.fill_bound_y2 < rect_y2:
+            self.fill_bound_y2 = rect_y2
+        self.prediction_grid[rect_y1:rect_y2, rect_x1:rect_x2] = new_i
+        if rect_x2 + 1 <= self.prediction_grid.shape[1] and \
+                self.prediction_grid[rect_y1:rect_y2, rect_x1+1:rect_x2+1][0][
+            0] == color_i:
+            self.fill_adjacent(color_i, rect_x1+1, rect_x2+1, rect_y1, rect_y2)
+        if rect_x1 - 1 >= 0 and \
+                self.prediction_grid[rect_y1:rect_y2, rect_x1-1:rect_x2-1][0][0].item() == color_i:
+            self.fill_adjacent(color_i, rect_x1-1, rect_x2-1, rect_y1, rect_y2)
+        if rect_y2 + 1 <= self.prediction_grid.shape[0] and \
+                self.prediction_grid[rect_y1+1:rect_y2+1, rect_x1:rect_x2][0][0].item() == color_i:
+            self.fill_adjacent(color_i, rect_x1, rect_x2, rect_y1+1, rect_y2+1)
+        if rect_y1 - 1 >= 0 and \
+                self.prediction_grid[rect_y1-1:rect_y2-1, rect_x1:rect_x2][0][0].item() == color_i:
+            self.fill_adjacent(color_i, rect_x1, rect_x2, rect_y1-1, rect_y2-1)
 
     def zoom_click(self, event):
         # Start a selection rect. Our rectangle selections can only be made up of small rectangles of size
