@@ -222,6 +222,17 @@ class TypeOneDetectionEditor(object):
             # scroll up
             self.canvas.yview_scroll(1, "units")
 
+    def change_img(self):
+        self.reload_img_and_detections()
+
+        # Reload image displayed on canvas and detections displayed on canvas with self.img and self.detections
+        self.canvas.image = ImageTk.PhotoImage(
+            Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.canvas.itemconfig(self.canvas_image_config, image=self.canvas.image)
+        self.canvas.delete("selection")
+        self.canvas.delete("detection")
+        self.update_detections()
+
     def left_arrow_key_press(self, event=None):
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
 
@@ -232,16 +243,7 @@ class TypeOneDetectionEditor(object):
                 self.leftButton.pack_forget()
             if self.dataset.progress["type_ones_image"] == len(self.dataset.imgs) - 2:
                 self.rightButton.pack(side=RIGHT)
-            # Reload self.img and self.detections
-            self.reload_img_and_detections()
-
-            # Reload image displayed on canvas and detections displayed on canvas with self.img and self.detections
-            self.canvas.image = ImageTk.PhotoImage(
-                Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
-            self.canvas.itemconfig(self.canvas_image_config, image=self.canvas.image)
-            self.canvas.delete("selection")
-            self.canvas.delete("detection")
-            self.update_detections()
+            self.change_img()
 
     def right_arrow_key_press(self, event=None):
         # Move to the image with index i+1, unless i = img #-1, in which case we do nothing. AKA the next image.
@@ -252,17 +254,7 @@ class TypeOneDetectionEditor(object):
                 self.rightButton.pack_forget()
             if self.dataset.progress["type_ones_image"] == 1:
                 self.leftButton.pack(side=LEFT)
-
-            # Reload self.img and self.detections
-            self.reload_img_and_detections()
-
-            # Reload image displayed on canvas and detections displayed on canvas with self.img and self.detections
-            self.canvas.image = ImageTk.PhotoImage(
-                Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
-            self.canvas.itemconfig(self.canvas_image_config, image=self.canvas.image)
-            self.canvas.delete("selection")
-            self.canvas.delete("detection")
-            self.update_detections()
+            self.change_img()
 
     def q_key_press(self, event=None):
         if messagebox.askquestion(
