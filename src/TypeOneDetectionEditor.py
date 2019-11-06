@@ -85,6 +85,7 @@ class TypeOneDetectionEditor(object):
         # Img + Event listeners
         self.canvas.image = ImageTk.PhotoImage(
             Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.canvas.config(scrollregion=(0, 0, self.canvas.image.width(), self.canvas.image.height()))
         self.canvas_image_config = self.canvas.create_image(
             0, 0,
             image=self.canvas.image,
@@ -242,6 +243,7 @@ class TypeOneDetectionEditor(object):
         self.canvas.delete("selection")
         self.canvas.delete("detection")
         self.update_detections()
+        self.canvas.config(scrollregion=(0, 0, self.canvas.image.width(), self.canvas.image.height()))
         self.canvas.yview_moveto(0)
         self.canvas.xview_moveto(0)
 

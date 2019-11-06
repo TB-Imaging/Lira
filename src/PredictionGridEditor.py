@@ -161,6 +161,7 @@ class PredictionGridEditor(object):
         # Img + Event listeners
         self.main_canvas.image = ImageTk.PhotoImage(
             Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.main_canvas.config(scrollregion=(0, 0, self.main_canvas.image.width(), self.main_canvas.image.height()))
         self.main_canvas_image_config = self.main_canvas.create_image(0, 0, image=self.main_canvas.image,
                                                                       anchor="nw")  # So we can change the image later
         self.main_canvas.focus_set()
@@ -575,6 +576,7 @@ class PredictionGridEditor(object):
         # Indicate finished loading
         self.window.title("{} - Image {}/{}".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
                                                     len(self.dataset.prediction_grids.before_editing)))
+        self.main_canvas.config(scrollregion=(0, 0, self.main_canvas.image.width(), self.main_canvas.image.height()))
         self.main_canvas.yview_moveto(0)
         self.main_canvas.xview_moveto(0)
 
