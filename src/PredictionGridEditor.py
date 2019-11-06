@@ -149,7 +149,9 @@ class PredictionGridEditor(object):
         leftrightFrame.pack()
         # begin with the leftButton hidden, and only show the rightButton if there are multiple
         # images
-        if len(self.dataset.imgs) > 1:
+        if len(self.dataset.imgs) > 1 and self.dataset.progress["prediction_grids_image"] > 0:
+            self.leftButton.pack(side=LEFT)
+        if len(self.dataset.imgs) > 1 and self.dataset.progress["prediction_grids_image"] < len(self.dataset.imgs) - 1:
             self.rightButton.pack(side=RIGHT)
 
         # Title
@@ -553,6 +555,29 @@ class PredictionGridEditor(object):
             # scroll up
             self.main_canvas.yview_scroll(1, "units")
 
+    def update_img(self):
+        self.window.title(
+            "{} - Image {}/{} - Loading...".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
+                                                   len(self.dataset.prediction_grids.before_editing)))
+        self.window.update()
+
+        # Reload self.img and self.prediction_grid
+        self.reload_img_and_predictions()
+
+        # Reload image displayed on canvas and predictions displayed on canvas with self.img and
+        # self.prediction_grids
+        self.main_canvas.image = ImageTk.PhotoImage(
+            Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
+        self.main_canvas.delete("view_selection")
+        self.main_canvas.delete("classification_selection")
+
+        # Indicate finished loading
+        self.window.title("{} - Image {}/{}".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
+                                                    len(self.dataset.prediction_grids.before_editing)))
+        self.main_canvas.yview_moveto(0)
+        self.main_canvas.xview_moveto(0)
+
     def left_arrow_key_press(self, event=None):
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
 
@@ -567,26 +592,7 @@ class PredictionGridEditor(object):
                 self.leftButton.pack_forget()
             if self.dataset.progress["prediction_grids_image"] == len(self.dataset.imgs) - 2:
                 self.rightButton.pack(side=RIGHT)
-            # Indicate Loading
-            self.window.title(
-                "{} - Image {}/{} - Loading...".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
-                                                       len(self.dataset.prediction_grids.before_editing)))
-            self.window.update()
-
-            # Reload self.img and self.prediction_grid
-            self.reload_img_and_predictions()
-
-            # Reload image displayed on canvas and predictions displayed on canvas with self.img and
-            # self.prediction_grids
-            self.main_canvas.image = ImageTk.PhotoImage(
-                Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
-            self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
-            self.main_canvas.delete("view_selection")
-            self.main_canvas.delete("classification_selection")
-
-            # Indicate finished loading
-            self.window.title("{} - Image {}/{}".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
-                                                        len(self.dataset.prediction_grids.before_editing)))
+            self.update_img()
 
     def right_arrow_key_press(self, event=None):
         # Move to the image with index i+1, unless i = img #-1, in which case we do nothing. AKA the next image.
@@ -601,26 +607,7 @@ class PredictionGridEditor(object):
                 self.rightButton.pack_forget()
             if self.dataset.progress["prediction_grids_image"] == 1:
                 self.leftButton.pack(side=LEFT)
-
-            # Indicate Loading
-            self.window.title(
-                "{} - Image {}/{} - Loading...".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
-                                                       len(self.dataset.prediction_grids.before_editing)))
-            self.window.update()
-
-            # Reload self.img and self.prediction_grid
-            self.reload_img_and_predictions()
-
-            # Reload image displayed on canvas and predictions displayed on canvas with self.img and self.prediction_grids
-            self.main_canvas.image = ImageTk.PhotoImage(
-                Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
-            self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
-            self.main_canvas.delete("view_selection")
-            self.main_canvas.delete("classification_selection")
-
-            # Indicate finished loading
-            self.window.title("{} - Image {}/{}".format(self.title, self.dataset.progress["prediction_grids_image"] + 1,
-                                                        len(self.dataset.prediction_grids.before_editing)))
+            self.update_img()
 
     def fill_selected_area(self):
         # Change currently selected area to this classification. We update the prediction grid, but we also update
