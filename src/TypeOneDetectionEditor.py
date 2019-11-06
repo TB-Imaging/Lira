@@ -75,8 +75,10 @@ class TypeOneDetectionEditor(object):
         leftrightFrame.pack()
         # begin with the leftButton hidden, and only show the rightButton if there are multiple
         # images
-        if len(self.dataset.imgs) > 1:
+        if len(self.dataset.imgs) > 1 and self.dataset.progress["type_ones_image"] < len(self.dataset.imgs) - 1:
             self.rightButton.pack(side=RIGHT)
+        if len(self.dataset.imgs) > 1 and self.dataset.progress["type_ones_image"] > 0:
+            self.leftButton.pack(side=LEFT)
 
         self.canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 
@@ -230,7 +232,7 @@ class TypeOneDetectionEditor(object):
             # scroll up
             self.canvas.yview_scroll(1, "units")
 
-    def change_img(self):
+    def update_img(self):
         self.reload_img_and_detections()
 
         # Reload image displayed on canvas and detections displayed on canvas with self.img and self.detections
@@ -253,7 +255,7 @@ class TypeOneDetectionEditor(object):
                 self.leftButton.pack_forget()
             if self.dataset.progress["type_ones_image"] == len(self.dataset.imgs) - 2:
                 self.rightButton.pack(side=RIGHT)
-            self.change_img()
+            self.update_img()
 
     def right_arrow_key_press(self, event=None):
         # Move to the image with index i+1, unless i = img #-1, in which case we do nothing. AKA the next image.
@@ -264,7 +266,7 @@ class TypeOneDetectionEditor(object):
                 self.rightButton.pack_forget()
             if self.dataset.progress["type_ones_image"] == 1:
                 self.leftButton.pack(side=LEFT)
-            self.change_img()
+            self.update_img()
 
     def finish_button_press(self, event=None):
         # (Finish) We prompt them for if they are finished with editing or not. If they're not
