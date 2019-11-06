@@ -8,6 +8,14 @@ from PIL import ImageTk, Image
 from gui_base import *
 
 
+def q_key_press(event=None):
+    if messagebox.askquestion(
+        'Quit',
+        'Would you like to quit?'
+    ) == 'yes':
+        sys.exit('Exiting...')
+
+
 class TypeOneDetectionEditor(object):
     def __init__(self, dataset):
         # Initialize our editor on this user's last edited image
@@ -26,7 +34,7 @@ class TypeOneDetectionEditor(object):
         # Window + Frame
         self.window = Tk()
         self.window.title('L.I.R.A.')
-        self.window.protocol("WM_DELETE_WINDOW", self.q_key_press)
+        self.window.protocol("WM_DELETE_WINDOW", q_key_press)
         self.frame = Frame(self.window, bd=5, relief=SUNKEN)
         self.frame.grid(row=0, column=0)
 
@@ -55,7 +63,7 @@ class TypeOneDetectionEditor(object):
 
         buttonFrame = Frame(self.window, bd=5)
         finishButton = Button(buttonFrame, text="Continue", command=self.finish_button_press)
-        quitButton = Button(buttonFrame, text="Quit", command=self.q_key_press)
+        quitButton = Button(buttonFrame, text="Quit", command=q_key_press)
 
         leftrightFrame = Frame(buttonFrame)
         self.leftButton = Button(leftrightFrame, text="◀", command=self.left_arrow_key_press)
@@ -232,6 +240,8 @@ class TypeOneDetectionEditor(object):
         self.canvas.delete("selection")
         self.canvas.delete("detection")
         self.update_detections()
+        # self.canvas.yview_moveto(0)
+        # self.canvas.xview_moveto(0)
 
     def left_arrow_key_press(self, event=None):
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
@@ -256,13 +266,6 @@ class TypeOneDetectionEditor(object):
                 self.leftButton.pack(side=LEFT)
             self.change_img()
 
-    def q_key_press(self, event=None):
-        if messagebox.askquestion(
-            'Quit',
-            'Would you like to quit?'
-        ) == 'yes':
-            sys.exit('Exiting...')
-
     def finish_button_press(self, event=None):
         # (Finish) We prompt them for if they are finished with editing or not. If they're not
         # finished we do nothing, otherwise we move to the next step.
@@ -278,7 +281,7 @@ class TypeOneDetectionEditor(object):
         # Hub for all key press events.
         c = event.char.upper()
         if c == "Q":
-            self.q_key_press(event)
+            q_key_press(event)
         # elif c == "N":
         #     self.n_key_press(event)
 
