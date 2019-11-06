@@ -240,8 +240,8 @@ class TypeOneDetectionEditor(object):
         self.canvas.delete("selection")
         self.canvas.delete("detection")
         self.update_detections()
-        # self.canvas.yview_moveto(0)
-        # self.canvas.xview_moveto(0)
+        self.canvas.yview_moveto(0)
+        self.canvas.xview_moveto(0)
 
     def left_arrow_key_press(self, event=None):
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
