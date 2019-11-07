@@ -175,6 +175,19 @@ class PredictionGridEditor(object):
         self.toolButtons = []
         self.iconImages = []
         icon_color_str = "#%02x%02x%02x" % (180, 180, 180)
+        self.undo_img = Image.open(os.path.join(icon_dir, "undo-solid.png"))
+        self.undo_img = self.undo_img.resize((20, 20), Image.ANTIALIAS)
+        self.undo_img = ImageTk.PhotoImage(self.undo_img)
+        self.undoButton = Button(
+            self.frame,
+            relief=SUNKEN,
+            state=DISABLED,
+            command=self.undo,
+            bg=icon_color_str,
+            image=self.undo_img
+        )
+        self.undoButton.pack(side=LEFT)
+        self.undos = []
 
         def change_tool(index):
             return lambda: self.changeTool(index)
@@ -192,10 +205,12 @@ class PredictionGridEditor(object):
             if i == self.tool_index:
                 self.toolButtons[i].config(relief=SUNKEN, state=DISABLED)
             self.toolButtons[i].pack()
+
         self.paletteButtons = []
 
         def change_color(index):
             return lambda: self.changeColor(index)
+
         # Side Canvas
         for i, (classification, color) in enumerate(zip(self.classification_key, self.color_key)):
             # Since our colors are in BGR, and tkinter only accepts hex, we have to create a hex string for them,
@@ -224,9 +239,9 @@ class PredictionGridEditor(object):
             if i == self.color_index:
                 self.paletteButtons[i].config(relief=SUNKEN, state=DISABLED)
             if i < 4:
-                self.paletteButtons[i].grid(sticky=W+E, row=i, column=0)
+                self.paletteButtons[i].grid(sticky=W + E, row=i, column=0)
             else:
-                self.paletteButtons[i].grid(sticky=W+E, row=i-4, column=1)
+                self.paletteButtons[i].grid(sticky=W + E, row=i - 4, column=1)
 
         # Add left mouse and right mouse
 
@@ -241,6 +256,29 @@ class PredictionGridEditor(object):
 
         # Predictions and start
         self.window.mainloop()
+
+    def undo(self):
+        if len(self.undos) == 0:
+            return
+        pred_grid, img = self.undos.pop()
+        self.prediction_grid = pred_grid
+        self.img = img
+        self.dataset.prediction_grids.after_editing[
+            self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
+        self.main_canvas.image = ImageTk.PhotoImage(
+            Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
+        if len(self.undos) == 0:
+            self.undoButton.config(state=DISABLED, relief=SUNKEN)
+
+    def add_undo(self):
+        if len(self.undos) == 0:
+            self.undoButton.config(state=NORMAL, relief=RAISED)
+        self.undos.append((np.copy(self.prediction_grid), np.copy(self.img)))
+
+    def clear_undos(self):
+        self.undos = []
+        self.undoButton.config(state=DISABLED, relief=SUNKEN)
 
     def changeColor(self, index):
         if index >= len(self.paletteButtons):
@@ -258,7 +296,7 @@ class PredictionGridEditor(object):
         self.main_canvas.config(cursor=self.tool_cursors[index])
         # "pencil", "draw-square", "paint-bucket", "zoom"
         if self.tools[index] == "pencil":
-            self.main_canvas.bind("<Button 1>", self.pencil_move)  # mouse_click
+            self.main_canvas.bind("<Button 1>", self.pencil_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.pencil_move)  # mouse_move
             self.main_canvas.unbind("<ButtonRelease-1>")
         elif self.tools[index] == "draw-square":
@@ -275,9 +313,14 @@ class PredictionGridEditor(object):
             self.main_canvas.bind("<ButtonRelease-1>", self.zoom_release)  # mouse_left_release
 
     # The following functions are event handlers for our editing window.
+    def pencil_click(self, event):
+        self.add_undo()
+        self.pencil_move(event)
+
     def pencil_move(self, event):
 
-        self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)# Get rectangle coordinates from our initial mouse click point to this point
+        self.selection_x1, self.selection_y1 = get_canvas_coordinates(
+            event)  # Get rectangle coordinates from our initial mouse click point to this point
         rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(
             self.selection_x1, self.selection_y1,
             self.selection_x1, self.selection_y1
@@ -321,7 +364,7 @@ class PredictionGridEditor(object):
 
         # Get rectangle coordinates from our initial mouse click point to this point
         rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(
-            self.selection_x1,self.selection_y1,
+            self.selection_x1, self.selection_y1,
             self.selection_x2, self.selection_y2
         )
 
@@ -379,10 +422,11 @@ class PredictionGridEditor(object):
         self.main_canvas.delete("classification_selection")
 
     def paint_bucket_click(self, event):
+        self.add_undo()
         # Get coordinates on canvas for beginning of this selection, (x1, y1)
         self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)
         outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
-        self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
+            self.selection_x1, self.selection_y1, self.selection_x1, self.selection_y1, self.sub_h, self.sub_w)
 
         self.prediction_rect_x1 = int(outline_rect_x1 / self.sub_w)
         self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h)
@@ -394,7 +438,7 @@ class PredictionGridEditor(object):
             self.prediction_rect_y2 += 1
         i = self.color_index
         square_color_i = self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
-        self.prediction_rect_x1:self.prediction_rect_x2][0][0]
+                         self.prediction_rect_x1:self.prediction_rect_x2][0][0]
         # print(square_color_i)
 
         # Save updated predictions
@@ -411,12 +455,12 @@ class PredictionGridEditor(object):
         self.dataset.prediction_grids.after_editing[
             self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
         img_section = self.resized_img[
-                          self.fill_bound_y1 * self.sub_h:self.fill_bound_y2 * self.sub_h,
-                          self.fill_bound_x1 * self.sub_w:self.fill_bound_x2 * self.sub_w
+                      self.fill_bound_y1 * self.sub_h:self.fill_bound_y2 * self.sub_h,
+                      self.fill_bound_x1 * self.sub_w:self.fill_bound_x2 * self.sub_w
                       ]
         prediction_grid_section = self.prediction_grid[
-                                      self.fill_bound_y1:self.fill_bound_y2,
-                                      self.fill_bound_x1:self.fill_bound_x2
+                                  self.fill_bound_y1:self.fill_bound_y2,
+                                  self.fill_bound_x1:self.fill_bound_x2
                                   ]
         prediction_overlay_section = np.zeros_like(img_section)
         for row_i, row in enumerate(prediction_grid_section):
@@ -448,7 +492,7 @@ class PredictionGridEditor(object):
         if color_i == new_i:
             return
         if rect_x1 < 0 or rect_y1 < 0 or \
-            rect_x2 > self.prediction_grid.shape[1] or rect_y2 > self.prediction_grid.shape[0]:
+                rect_x2 > self.prediction_grid.shape[1] or rect_y2 > self.prediction_grid.shape[0]:
             return
         if self.fill_bound_x1 > rect_x1:
             self.fill_bound_x1 = rect_x1
@@ -460,18 +504,18 @@ class PredictionGridEditor(object):
             self.fill_bound_y2 = rect_y2
         self.prediction_grid[rect_y1:rect_y2, rect_x1:rect_x2] = new_i
         if rect_x2 + 1 <= self.prediction_grid.shape[1] and \
-                self.prediction_grid[rect_y1:rect_y2, rect_x1+1:rect_x2+1][0][
-            0] == color_i:
-            self.fill_adjacent(color_i, rect_x1+1, rect_x2+1, rect_y1, rect_y2)
+                self.prediction_grid[rect_y1:rect_y2, rect_x1 + 1:rect_x2 + 1][0][
+                    0] == color_i:
+            self.fill_adjacent(color_i, rect_x1 + 1, rect_x2 + 1, rect_y1, rect_y2)
         if rect_x1 - 1 >= 0 and \
-                self.prediction_grid[rect_y1:rect_y2, rect_x1-1:rect_x2-1][0][0].item() == color_i:
-            self.fill_adjacent(color_i, rect_x1-1, rect_x2-1, rect_y1, rect_y2)
+                self.prediction_grid[rect_y1:rect_y2, rect_x1 - 1:rect_x2 - 1][0][0].item() == color_i:
+            self.fill_adjacent(color_i, rect_x1 - 1, rect_x2 - 1, rect_y1, rect_y2)
         if rect_y2 + 1 <= self.prediction_grid.shape[0] and \
-                self.prediction_grid[rect_y1+1:rect_y2+1, rect_x1:rect_x2][0][0].item() == color_i:
-            self.fill_adjacent(color_i, rect_x1, rect_x2, rect_y1+1, rect_y2+1)
+                self.prediction_grid[rect_y1 + 1:rect_y2 + 1, rect_x1:rect_x2][0][0].item() == color_i:
+            self.fill_adjacent(color_i, rect_x1, rect_x2, rect_y1 + 1, rect_y2 + 1)
         if rect_y1 - 1 >= 0 and \
-                self.prediction_grid[rect_y1-1:rect_y2-1, rect_x1:rect_x2][0][0].item() == color_i:
-            self.fill_adjacent(color_i, rect_x1, rect_x2, rect_y1-1, rect_y2-1)
+                self.prediction_grid[rect_y1 - 1:rect_y2 - 1, rect_x1:rect_x2][0][0].item() == color_i:
+            self.fill_adjacent(color_i, rect_x1, rect_x2, rect_y1 - 1, rect_y2 - 1)
 
     def zoom_click(self, event):
         # Start a selection rect. Our rectangle selections can only be made up of small rectangles of size
@@ -580,6 +624,7 @@ class PredictionGridEditor(object):
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
 
         if self.dataset.progress["prediction_grids_image"] > 0:
+            self.clear_undos()
             # Save current predictions
             self.dataset.prediction_grids.after_editing[
                 self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
@@ -595,6 +640,7 @@ class PredictionGridEditor(object):
     def right_arrow_key_press(self, event=None):
         # Move to the image with index i+1, unless i = img #-1, in which case we do nothing. AKA the next image.
         if self.dataset.progress["prediction_grids_image"] < len(self.dataset.imgs) - 1:
+            self.clear_undos()
             # Save current predictions
             self.dataset.prediction_grids.after_editing[
                 self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
@@ -608,14 +654,17 @@ class PredictionGridEditor(object):
             self.update_img()
 
     def fill_selected_area(self):
+        self.add_undo()
         # Change currently selected area to this classification. We update the prediction grid, but we also update
         # the display by extracting the selected section and updating the overlay of only that section,
         # because updating the entire image is very expensive and should be avoided. First get the classification index
         i = self.color_index
         # Update predictions referenced by our current classification_selection rectangle to this index and get the
         # prediction grid section that was updated
-        self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
-        self.prediction_rect_x1:self.prediction_rect_x2] = i
+        self.prediction_grid[
+            self.prediction_rect_y1:self.prediction_rect_y2,
+            self.prediction_rect_x1:self.prediction_rect_x2
+        ] = i
         self.prediction_grid_section = self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
                                        self.prediction_rect_x1:self.prediction_rect_x2]
 
@@ -680,7 +729,6 @@ class PredictionGridEditor(object):
         elif c.isnumeric():
             i = int(c)
             self.changeColor(i)
-
 
     # The following functions are helper functions specific to this editor. All other GUI helpers are in the gui_base.py file.
     def reload_img_and_predictions(self):
