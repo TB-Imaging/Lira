@@ -243,6 +243,8 @@ class PredictionGridEditor(object):
         self.window.mainloop()
 
     def changeColor(self, index):
+        if index >= len(self.paletteButtons):
+            return
         if self.color_index > -1:
             self.paletteButtons[self.color_index].config(relief=FLAT, state=NORMAL)
         self.paletteButtons[index].config(relief=SUNKEN, state=DISABLED)
@@ -271,9 +273,6 @@ class PredictionGridEditor(object):
             self.main_canvas.bind("<Button 1>", self.zoom_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.zoom_move)  # mouse_move
             self.main_canvas.bind("<ButtonRelease-1>", self.zoom_release)  # mouse_left_release
-        # self.main_canvas.bind("<Button 3>", self.mouse_click)
-        # self.main_canvas.bind("<B3-Motion>", self.mouse_move)
-        # self.main_canvas.bind("<ButtonRelease-3>", self.mouse_right_release)
 
     # The following functions are event handlers for our editing window.
     def pencil_move(self, event):
@@ -299,9 +298,6 @@ class PredictionGridEditor(object):
         self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h)
 
         self.fill_selected_area()
-
-    # def pencil_move(self, event):
-    #     pass
 
     def draw_square_click(self, event):
         # Start a selection rect.
@@ -681,7 +677,10 @@ class PredictionGridEditor(object):
         c = event.char.upper()
         if c == "Q":
             self.q_key_press(event)
-        # Classification keys should remove the rectangle
+        elif c.isnumeric():
+            i = int(c)
+            self.changeColor(i)
+
 
     # The following functions are helper functions specific to this editor. All other GUI helpers are in the gui_base.py file.
     def reload_img_and_predictions(self):
