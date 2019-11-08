@@ -2,6 +2,8 @@ import sys
 import numpy as np
 import cv2
 import tkinter as tk
+import os
+import glob
 from tkinter import messagebox
 
 from base import *
@@ -10,6 +12,13 @@ from Images import Images
 from TypeOneDetections import TypeOneDetections
 from PredictionGrids import PredictionGrids
 from tktools import center_left_window
+
+archive_dir = "../data/user_progress/"
+
+
+def get_user_list():
+    users = ['.'.join(f.split('.')[:-1]) for f in os.listdir(archive_dir) if f.endswith('.json')]
+    return users
 
 
 def inputFolderLoaded():
@@ -22,8 +31,14 @@ class BeginDialog(tk.Toplevel):
     def __init__(self, parent):
         tk.Toplevel.__init__(self, parent)
         self.title = "Title"
-        tk.Label(self, text="User ID").grid(row=0)
-        tk.Label(self, text="Restart").grid(row=1, columnspan=2, sticky=tk.E)
+        self.users = ['None Selected'] + list(sorted(get_user_list()))
+        self.var_user = tk.StringVar()
+        self.var_user.set('None Selected')
+        self.userMenu = tk.OptionMenu(self, self.var_user, *self.users, command=self.setUser)
+        self.userMenu.grid(row=0, column=1, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        tk.Button(self, text="Delete", command=self.deleteUser).grid(row=0, column=0, padx=10, pady=5)
+        tk.Label(self, text="User ID").grid(row=1)
+        tk.Label(self, text="Restart").grid(row=2, columnspan=2, sticky=tk.E)
 
         self.var_uid = tk.StringVar()
         self.var_restart = tk.BooleanVar()
@@ -31,13 +46,13 @@ class BeginDialog(tk.Toplevel):
         self.return_restart = False
 
         self.uid = tk.Entry(self, textvariable=self.var_uid)
-        self.uid.grid(row=0, column=1, pady=10, padx=10, columnspan=2)
+        self.uid.grid(row=1, column=1, pady=10, padx=10, columnspan=2)
         self.reset = tk.Checkbutton(self, variable=self.var_restart)
-        self.reset.grid(row=1, column=2, pady=5, sticky=tk.W)
+        self.reset.grid(row=2, column=2, pady=5, sticky=tk.W)
         beginButton = tk.Button(self, text="Begin", command=self.begin)
         cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
-        beginButton.grid(row=2, column=2, sticky=tk.E, pady=5, padx=5)
-        cancelButton.grid(row=2, column=0, sticky=tk.W, padx=5)
+        beginButton.grid(row=3, column=2, sticky=tk.E, pady=5, padx=5)
+        cancelButton.grid(row=3, column=0, sticky=tk.W, padx=5)
 
     def begin(self):
         # Assigning these variables to ensure that the program only continues
@@ -50,6 +65,31 @@ class BeginDialog(tk.Toplevel):
             self.destroy()
         else:
             messagebox.showwarning("Empty Input", "No files in the input directory!")
+
+    def setUser(self, event):
+        self.var_uid.set(self.var_user.get())
+
+    def deleteUser(self):
+        if self.var_user.get() == 'None Selected':
+            return
+        data_dir = "../data"
+        # data_folders =
+        user_file = self.var_user.get() + '.json'
+        user_img_prefix = self.var_user.get() + '_img_'
+        data_path1 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9].npy'
+        data_path2 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9][0-9].npy'
+        data_path3 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9][0-9][0-9].npy'
+        data_files = glob.glob(data_path1) + glob.glob(data_path2) + glob.glob(data_path3)
+        # print(user_file, data_path1, data_files)
+        for file in data_files:
+            os.remove(file)
+        os.remove(os.path.join(archive_dir, user_file))
+        self.users = ['None Selected'] + list(sorted(get_user_list()))
+        self.var_user.set('None Selected')
+        self.var_uid.set('')
+        self.userMenu.grid_forget()
+        self.userMenu = tk.OptionMenu(self, self.var_user, *self.users, command=self.setUser)
+        self.userMenu.grid(row=0, column=1, columnspan=3, sticky=tk.W, padx=10, pady=5)
 
     def show(self):
         self.wm_deiconify()
@@ -73,7 +113,7 @@ class Dataset(object):
             root.withdraw()
 
             bd = BeginDialog(root)
-            center_left_window(bd, 264, 108)
+            center_left_window(bd, 264, 148)
             bd.resizable(False, False)
             uid, restart = bd.show()
             root.destroy()
