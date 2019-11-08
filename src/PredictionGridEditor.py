@@ -421,6 +421,7 @@ class PredictionGridEditor(object):
         self.main_canvas.delete("classification_selection")
 
     def paint_bucket_click(self, event):
+        self.add_undo()
         # Get coordinates on canvas for beginning of this selection, (x1, y1)
         self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)
         outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
