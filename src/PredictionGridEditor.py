@@ -260,9 +260,7 @@ class PredictionGridEditor(object):
     def undo(self):
         if len(self.undos) == 0:
             return
-        pred_grid, img = self.undos.pop()
-        self.prediction_grid = pred_grid
-        self.img = img
+        self.prediction_grid, self.img = self.undos.pop()
         self.dataset.prediction_grids.after_editing[
             self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
         self.main_canvas.image = ImageTk.PhotoImage(
@@ -418,11 +416,11 @@ class PredictionGridEditor(object):
         self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w)
         self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h)
 
+        self.add_undo()
         self.fill_selected_area()
         self.main_canvas.delete("classification_selection")
 
     def paint_bucket_click(self, event):
-        self.add_undo()
         # Get coordinates on canvas for beginning of this selection, (x1, y1)
         self.selection_x1, self.selection_y1 = get_canvas_coordinates(event)
         outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
@@ -439,7 +437,6 @@ class PredictionGridEditor(object):
         i = self.color_index
         square_color_i = self.prediction_grid[self.prediction_rect_y1:self.prediction_rect_y2,
                          self.prediction_rect_x1:self.prediction_rect_x2][0][0]
-        # print(square_color_i)
 
         # Save updated predictions
         self.fill_bound_x1 = self.prediction_rect_x1
@@ -654,7 +651,6 @@ class PredictionGridEditor(object):
             self.update_img()
 
     def fill_selected_area(self):
-        self.add_undo()
         # Change currently selected area to this classification. We update the prediction grid, but we also update
         # the display by extracting the selected section and updating the overlay of only that section,
         # because updating the entire image is very expensive and should be avoided. First get the classification index
