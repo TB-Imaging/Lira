@@ -31,9 +31,10 @@ class BeginDialog(tk.Toplevel):
     def __init__(self, parent):
         tk.Toplevel.__init__(self, parent)
         self.title = "Title"
-        self.users = ['None Selected'] + list(sorted(get_user_list()))
+        self.users = ['-'] + list(sorted(get_user_list()))
+        self.userSet = set(self.users[1:])
         self.var_user = tk.StringVar()
-        self.var_user.set('None Selected')
+        self.var_user.set('-')
         self.userMenu = tk.OptionMenu(self, self.var_user, *self.users, command=self.setUser)
         self.userMenu.grid(row=0, column=1, columnspan=3, sticky=tk.W, padx=10, pady=5)
         tk.Button(self, text="Delete", command=self.deleteUser).grid(row=0, column=0, padx=10, pady=5)
@@ -45,20 +46,35 @@ class BeginDialog(tk.Toplevel):
         self.return_uid = ""
         self.return_restart = False
 
-        self.uid = tk.Entry(self, textvariable=self.var_uid)
+        vcmd = (self.register(self.enterUser), '%P')
+        self.uid = tk.Entry(self, textvariable=self.var_uid, validate="all",
+                            validatecommand=vcmd)
         self.uid.grid(row=1, column=1, pady=10, padx=10, columnspan=2)
-        self.reset = tk.Checkbutton(self, variable=self.var_restart)
+        self.reset = tk.Checkbutton(self, variable=self.var_restart, state=tk.DISABLED)
         self.reset.grid(row=2, column=2, pady=5, sticky=tk.W)
         beginButton = tk.Button(self, text="Begin", command=self.begin)
         cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
         beginButton.grid(row=3, column=2, sticky=tk.E, pady=5, padx=5)
         cancelButton.grid(row=3, column=0, sticky=tk.W, padx=5)
+        center_left_window(self, 274, 148)
+
+    def enterUser(self, ustring):
+        # print('enterUser', ustring, self.var_uid.get())
+        if ustring not in self.userSet:
+            self.var_user.set('-')
+            self.reset.config(state=tk.DISABLED)
+        else:
+            self.var_user.set(ustring)
+            self.reset.config(state=tk.NORMAL)
+        return True
 
     def begin(self):
         # Assigning these variables to ensure that the program only continues
         # if the user clicks "begin"; otherwise program cancels.
         if self.var_uid.get() == "":
             messagebox.showwarning("Empty User ID", "User ID is required.")
+        elif self.var_uid.get() == "-":
+            messagebox.showwarning("Bad ID", "Inappropriate User ID. Use a different User ID.")
         elif inputFolderLoaded():
             self.return_uid = self.var_uid.get()
             self.return_restart = self.var_restart.get()
@@ -66,11 +82,15 @@ class BeginDialog(tk.Toplevel):
         else:
             messagebox.showwarning("Empty Input", "No files in the input directory!")
 
-    def setUser(self, event):
-        self.var_uid.set(self.var_user.get())
+    def setUser(self, str):
+        if self.var_user.get() == '-':
+            self.var_uid.set('')
+        else:
+            self.var_uid.set(self.var_user.get())
+        self.reset.config(state=tk.NORMAL)
 
     def deleteUser(self):
-        if self.var_user.get() == 'None Selected':
+        if self.var_user.get() == '-':
             return
         data_dir = "../data"
         # data_folders =
@@ -84,8 +104,9 @@ class BeginDialog(tk.Toplevel):
         for file in data_files:
             os.remove(file)
         os.remove(os.path.join(archive_dir, user_file))
-        self.users = ['None Selected'] + list(sorted(get_user_list()))
-        self.var_user.set('None Selected')
+        self.users = ['-'] + list(sorted(get_user_list()))
+        self.userSet = set(self.users[1:])
+        self.var_user.set('-')
         self.var_uid.set('')
         self.userMenu.grid_forget()
         self.userMenu = tk.OptionMenu(self, self.var_user, *self.users, command=self.setUser)
@@ -113,7 +134,6 @@ class Dataset(object):
             root.withdraw()
 
             bd = BeginDialog(root)
-            center_left_window(bd, 264, 148)
             bd.resizable(False, False)
             uid, restart = bd.show()
             root.destroy()
