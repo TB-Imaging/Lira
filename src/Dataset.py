@@ -71,6 +71,11 @@ class BeginDialog(tk.Toplevel):
     def begin(self):
         # Assigning these variables to ensure that the program only continues
         # if the user clicks "begin"; otherwise program cancels.
+        if self.var_restart.get() and not tk.messagebox.askyesno("Are You Sure?", "Are you sure you want to "
+                                                                                  "restart and delete your "
+                                                                                  "progress?".format(
+                                                                                    self.var_user.get())):
+            return
         if self.var_uid.get() == "":
             messagebox.showwarning("Empty User ID", "User ID is required.")
         elif self.var_uid.get() == "-":
@@ -91,6 +96,9 @@ class BeginDialog(tk.Toplevel):
 
     def deleteUser(self):
         if self.var_user.get() == '-':
+            return
+        if not tk.messagebox.askyesno("Are You Sure?", "Are you sure you want to delete '{}'?".format(
+            self.var_user.get())):
             return
         data_dir = "../data"
         # data_folders =
