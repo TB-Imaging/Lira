@@ -175,19 +175,36 @@ class PredictionGridEditor(object):
         self.toolButtons = []
         self.iconImages = []
         icon_color_str = "#%02x%02x%02x" % (180, 180, 180)
+
+        self.buttonFrame = Frame(self.frame)
+
+        self.buttonFrame.pack(side=LEFT)
+
         self.undo_img = Image.open(os.path.join(icon_dir, "undo-solid.png"))
         self.undo_img = self.undo_img.resize((20, 20), Image.ANTIALIAS)
         self.undo_img = ImageTk.PhotoImage(self.undo_img)
         self.undoButton = Button(
-            self.frame,
+            self.buttonFrame,
             relief=SUNKEN,
             state=DISABLED,
             command=self.undo,
             bg=icon_color_str,
             image=self.undo_img
         )
-        self.undoButton.pack(side=LEFT)
+        self.undoButton.pack()
         self.undos = []
+
+        self.clear_img = Image.open(os.path.join(icon_dir, "eye-slash-solid.png"))
+        self.clear_img = self.clear_img.resize((20, 20), Image.ANTIALIAS)
+        self.clear_img = ImageTk.PhotoImage(self.clear_img)
+        self.clearButton = Button(
+            self.buttonFrame,
+            relief=FLAT,
+            command=self.clear_predictions,
+            bg=icon_color_str,
+            image=self.clear_img
+        )
+        self.clearButton.pack()
 
         def change_tool(index):
             return lambda: self.changeTool(index)
@@ -257,6 +274,43 @@ class PredictionGridEditor(object):
         # Predictions and start
         self.window.mainloop()
 
+    def clear_predictions(self):
+        self.add_undo()
+
+        self.prediction_grid[self.prediction_grid != 3] = 0
+
+        # Save updated predictions
+        self.dataset.prediction_grids.after_editing[
+            self.dataset.progress["prediction_grids_image"]] = self.prediction_grid
+
+        # Load the resized image section (without any overlay) referenced by our current classification_selection
+        # rectangle (no need to cast to int b/c int*int = int)
+        self.img_section = self.resized_img[:, :]
+
+        # Create new overlay on this resized image section with the prediction grid section
+        self.prediction_overlay_section = np.zeros_like(self.img_section)
+        for row_i, row in enumerate(self.prediction_grid):
+            for col_i, col in enumerate(row):
+                color = self.color_key[col]
+                # draw rectangles of the resized sub_hxsub_w size on it
+                cv2.rectangle(self.prediction_overlay_section, (col_i * self.sub_w, row_i * self.sub_h),
+                              (col_i * self.sub_w + self.sub_w, row_i * self.sub_h + self.sub_h), color, -1)
+
+        # Combine the overlay section and the image section
+        before_img_section = self.img_section
+        self.img_section = weighted_overlay(self.img_section, self.prediction_overlay_section,
+                                            self.editor_transparency_factor)
+        self.img_section = cv2.cvtColor(self.img_section,
+                                        cv2.COLOR_BGR2RGB)  # We need to convert so it will display the proper colors
+
+        # Insert the now-updated image section back into the full image
+        self.img[:, :] = self.img_section
+
+        # And finally update the canvas
+        self.main_canvas.image = ImageTk.PhotoImage(
+            Image.fromarray(self.img))  # Literally because tkinter can't handle references properly and needs this.
+        self.main_canvas.itemconfig(self.main_canvas_image_config, image=self.main_canvas.image)
+
     def undo(self):
         if len(self.undos) == 0:
             return
@@ -271,7 +325,7 @@ class PredictionGridEditor(object):
 
     def add_undo(self):
         if len(self.undos) == 0:
-            self.undoButton.config(state=NORMAL, relief=RAISED)
+            self.undoButton.config(state=NORMAL, relief=FLAT)
         self.undos.append((np.copy(self.prediction_grid), np.copy(self.img)))
         if len(self.undos) > 20:
             self.undos = self.undos[1:]
@@ -447,7 +501,8 @@ class PredictionGridEditor(object):
         fill_bound_y1 = self.prediction_rect_y1
         fill_bound_y2 = self.prediction_rect_y2
 
-        # take care of filling adjacent squares with an iterative implementation of recursion, using a stack
+        # take care of filling adjacent squares with an iterative implementation
+        # of recursion, using a stack because Python is scared of normal recursion
 
         rect_stack = [(self.prediction_rect_x1, self.prediction_rect_x2,
                        self.prediction_rect_y1, self.prediction_rect_y2)]
