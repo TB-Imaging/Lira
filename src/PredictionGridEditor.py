@@ -144,6 +144,7 @@ class PredictionGridEditor(object):
         leftrightFrame = Frame(buttonFrame)
         self.leftButton = Button(leftrightFrame, text="◀", command=self.left_arrow_key_press)
         self.rightButton = Button(leftrightFrame, text="▶", command=self.right_arrow_key_press)
+        self.updating_img = False
 
         buttonFrame.grid(row=1, column=0, sticky=W + E)
         quitButton.pack(side=LEFT)
@@ -681,9 +682,12 @@ class PredictionGridEditor(object):
         self.main_canvas.xview_moveto(0)
 
     def left_arrow_key_press(self, event=None):
+        # prevent multiple simultaneous calls
+        if self.updating_img:
+            return
         # Move to the image with index i-1, unless i = 0, in which case we do nothing. AKA the previous image.
-
         if self.dataset.progress["prediction_grids_image"] > 0:
+            self.updating_img = True
             self.clear_undos()
             # Save current predictions
             self.dataset.prediction_grids.after_editing[
@@ -696,10 +700,15 @@ class PredictionGridEditor(object):
             if self.dataset.progress["prediction_grids_image"] == len(self.dataset.imgs) - 2:
                 self.rightButton.pack(side=RIGHT)
             self.update_img()
+            self.updating_img = False
 
     def right_arrow_key_press(self, event=None):
+        # prevent multiple simultaneous calls
+        if self.updating_img:
+            return
         # Move to the image with index i+1, unless i = img #-1, in which case we do nothing. AKA the next image.
         if self.dataset.progress["prediction_grids_image"] < len(self.dataset.imgs) - 1:
+            self.updating_img = True
             self.clear_undos()
             # Save current predictions
             self.dataset.prediction_grids.after_editing[
@@ -712,6 +721,8 @@ class PredictionGridEditor(object):
             if self.dataset.progress["prediction_grids_image"] == 1:
                 self.leftButton.pack(side=LEFT)
             self.update_img()
+            self.updating_img = False
+
 
     def fill_selected_area(self):
         # Change currently selected area to this classification. We update the prediction grid, but we also update
