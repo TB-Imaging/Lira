@@ -244,7 +244,7 @@ class Dataset(object):
                     prediction_n = np.sum(prediction_counts)
 
                     # Get percentage each classification takes up of the total classifications
-                    prediction_avgs = prediction_counts / prediction_n
+                    prediction_avgs = 100 * prediction_counts / prediction_n
 
                     # Get the number of Type One Lesions / Type One Detection Clusters in this image
                     detection_count = len(get_rect_clusters(detections))
