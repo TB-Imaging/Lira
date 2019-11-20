@@ -7,6 +7,7 @@ from tkinter import *
 from tkinter import messagebox
 from PIL import ImageTk, Image
 
+from Tooltip import createTooltip
 from gui_base import *
 from base import *
 from tktools import center_left_window
@@ -99,6 +100,7 @@ class PredictionGridEditor(object):
         self.tools = ["pencil", "draw-square", "paint-bucket", "zoom"]
         self.tool_cursors = ["pencil", "crosshair", "coffee_mug", "target"]
         self.tool_icons = ["pencil-alt-solid.png", "edit-solid.png", "fill-drip-solid.png", "search-plus-solid.png"]
+        tool_tips = ["Pencil tool", "Color selected rectangle", "Fill tool", "Zoom in on selected area"]
         self.tool_index = -1
         base_dir = os.path.dirname(os.getcwd())
         icon_dir = os.path.join(base_dir, 'icons')
@@ -205,6 +207,8 @@ class PredictionGridEditor(object):
             image=self.clear_img
         )
         self.clearButton.pack()
+        createTooltip(self.undoButton, 'Undo last edit')
+        createTooltip(self.clearButton, 'Set all classifications to Healthy Tissue')
 
         def change_tool(index):
             return lambda: self.changeTool(index)
@@ -222,6 +226,7 @@ class PredictionGridEditor(object):
             if i == self.tool_index:
                 self.toolButtons[i].config(relief=SUNKEN, state=DISABLED)
             self.toolButtons[i].pack()
+            createTooltip(self.toolButtons[i], tool_tips[i])
 
         self.paletteButtons = []
 
