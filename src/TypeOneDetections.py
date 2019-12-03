@@ -28,6 +28,8 @@ class TypeOneDetections(object):
 
         # Detection parameters and classifier
         self.detection = True
+        if self.dataset.progress["model"] == "balbc":
+            self.detection = False
 
         # Size of each side of the cross
         self.side_size = 2000
@@ -155,6 +157,8 @@ class TypeOneDetections(object):
 
         # Now that we've finished generating, we've started editing, so we update user progress.
         self.dataset.progress["type_ones_started_editing"] = True
+        if self.dataset.progress["model"] == "balbc":
+            self.dataset.progress["type_ones_finished_editing"] = True
 
         sys.stdout.flush()
         print("")

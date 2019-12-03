@@ -33,15 +33,19 @@ class PredictionGrids(object):
         self.denoising_weight = 0.8  # Amount to denoise, 0 <= denoising_weight <= 1. Higher means more denoising.
 
         # Classifiers
-        self.type_one_classifier = load_model("../classifiers/type_one_classifier.h5")  # For type-one classification
-        self.non_type_one_classifier = load_model(
-            "../classifiers/non_type_one_classifier.h5")  # For non-type-one classification
+        if self.dataset.progress["model"] == "kramnik":
+            self.type_one_classifier = load_model("../classifiers/type_one_classifier.h5")  # For type-one classification
+            self.non_type_one_classifier = load_model(
+                "../classifiers/non_type_one_classifier.h5")  # For non-type-one classification
+        else:
+            print("REPLACE STANDARD KRAMNIK CLASSIFIER WITH BALB/C")
+            self.non_type_one_classifier = load_model("../classifiers/non_type_one_classifier.h5")
 
     def generate(self):
         # Loops through a grid of subsections in our image as input to our models,
         # and outputs a grid of predictions matching these subsections.
 
-        # Generate for each image ## GOOD CANDIDATE FOR PROGRESSBAR
+        # Generate for each image
         progress = TwoLayerProgress(
             steps=len(self.dataset.imgs),
             label="Generating Prediction Grids"
@@ -51,12 +55,11 @@ class PredictionGrids(object):
             progress.setProgressStep(img_i)
             progress.setProgressTwoPercent(0)
             progress.update()
-            # def prediction_callback(img_i):
-            #     img = self.dataset.imgs[img_i]
+
             # Total # of predictions on this image
             prediction_h = (img.shape[0] // self.sub_h)
             prediction_w = (img.shape[1] // self.sub_w)
-            prediction_n = (img.shape[0] // self.sub_h) * (img.shape[1] // self.sub_w)
+            prediction_n = prediction_h * prediction_w
 
             # Where predictions are stored for image. Starts as 1d for easier reference
             prediction_grid = np.zeros((prediction_n, self.class_n), dtype=np.float32)

@@ -212,7 +212,7 @@ class Dataset(object):
                 self.type_one_detections = TypeOneDetections(self, self.uid, restart=True)
                 self.prediction_grids = PredictionGrids(self, self.uid, restart=True)
 
-    def detect_type_ones(self, kivy=False):
+    def detect_type_ones(self):
         # Detect type ones, suppress them, and allow human-in-the-loop editing. If our user progress indicates they
         # have already done some or all of these steps, we will skip over the already-completed steps.
 
@@ -221,7 +221,7 @@ class Dataset(object):
             self.type_one_detections.generate()
 
         # Only edit if the user hasn't finished editing
-        if not self.progress["type_ones_finished_editing"] and not kivy:
+        if not self.progress["type_ones_finished_editing"] and not self.progress["model"] == "balbc":
             self.type_one_detections.edit()
 
     def predict_grids(self):
