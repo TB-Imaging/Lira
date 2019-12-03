@@ -55,26 +55,39 @@ class BeginDialog(tk.Toplevel):
         self.uid = tk.Entry(self, textvariable=self.var_uid, validate="all",
                             validatecommand=vcmd)
         self.uid.grid(row=1, column=1, pady=10, padx=10, columnspan=2)
-        self.reset = tk.Checkbutton(self, variable=self.var_restart, state=tk.DISABLED)
+        self.reset = tk.Checkbutton(self, variable=self.var_restart, state=tk.DISABLED, command=self.restart)
         self.reset.grid(row=3, column=1, pady=5, sticky=tk.W)
-        tk.Radiobutton(self, text="BALB/c", value="balbc", variable=self.var_model).grid(row=2, column=1, pady=0,
-                                                                                         sticky=tk.W)
-        tk.Radiobutton(self, text="Kramnik", value="kramnik", variable=self.var_model).grid(row=2, column=2, pady=0,
-                                                                                            sticky=tk.W)
+        self.balbc = tk.Radiobutton(self, text="BALB/c", value="balbc", variable=self.var_model)
+        self.balbc.grid(row=2, column=1, pady=0, sticky=tk.W)
+        self.kramnik = tk.Radiobutton(self, text="Kramnik", value="kramnik", variable=self.var_model)
+        self.kramnik.grid(row=2, column=2, pady=0, sticky=tk.W)
         beginButton = tk.Button(self, text="Begin", command=self.begin)
         cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
         beginButton.grid(row=4, column=2, sticky=tk.E, pady=5, padx=5)
         cancelButton.grid(row=4, column=0, sticky=tk.W, padx=5)
         center_left_window(self, 274, 168)
 
+    def restart(self):
+        if self.var_restart.get():
+            self.balbc.config(state=tk.NORMAL)
+            self.kramnik.config(state=tk.NORMAL)
+        else:
+            self.balbc.config(state=tk.DISABLED)
+            self.kramnik.config(state=tk.DISABLED)
+
     def enterUser(self, ustring):
-        # print('enterUser', ustring, self.var_uid.get())
         if ustring not in self.userSet:
             self.var_user.set('-')
+            self.var_restart.set(False)
             self.reset.config(state=tk.DISABLED)
+            self.balbc.config(state=tk.NORMAL)
+            self.kramnik.config(state=tk.NORMAL)
         else:
             self.var_user.set(ustring)
             self.reset.config(state=tk.NORMAL)
+            if not self.var_restart.get():
+                self.balbc.config(state=tk.DISABLED)
+                self.kramnik.config(state=tk.DISABLED)
         return True
 
     def begin(self):
