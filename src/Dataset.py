@@ -40,11 +40,14 @@ class BeginDialog(tk.Toplevel):
         tk.Button(self, text="Delete", command=self.deleteUser).grid(row=0, column=0, padx=10, pady=5)
         tk.Label(self, text="User ID").grid(row=1)
         tk.Label(self, text="Restart").grid(row=2, columnspan=2, sticky=tk.E)
+        tk.Label(self, text="BALB/c").grid(row=3, columnspan=2, sticky=tk.E)
 
         self.var_uid = tk.StringVar()
         self.var_restart = tk.BooleanVar()
+        self.var_balbc = tk.BooleanVar()
         self.return_uid = ""
         self.return_restart = False
+        self.return_balbc = False
 
         vcmd = (self.register(self.enterUser), '%P')
         self.uid = tk.Entry(self, textvariable=self.var_uid, validate="all",
@@ -52,11 +55,13 @@ class BeginDialog(tk.Toplevel):
         self.uid.grid(row=1, column=1, pady=10, padx=10, columnspan=2)
         self.reset = tk.Checkbutton(self, variable=self.var_restart, state=tk.DISABLED)
         self.reset.grid(row=2, column=2, pady=5, sticky=tk.W)
+        self.balbc = tk.Checkbutton(self, variable=self.var_balbc)
+        self.balbc.grid(row=3, column=2, pady=0, sticky=tk.W)
         beginButton = tk.Button(self, text="Begin", command=self.begin)
         cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
-        beginButton.grid(row=3, column=2, sticky=tk.E, pady=5, padx=5)
-        cancelButton.grid(row=3, column=0, sticky=tk.W, padx=5)
-        center_left_window(self, 274, 148)
+        beginButton.grid(row=4, column=2, sticky=tk.E, pady=5, padx=5)
+        cancelButton.grid(row=4, column=0, sticky=tk.W, padx=5)
+        center_left_window(self, 274, 168)
 
     def enterUser(self, ustring):
         # print('enterUser', ustring, self.var_uid.get())
@@ -83,6 +88,7 @@ class BeginDialog(tk.Toplevel):
         elif inputFolderLoaded():
             self.return_uid = self.var_uid.get()
             self.return_restart = self.var_restart.get()
+            self.return_balbc = self.var_balbc.get()
             self.destroy()
         else:
             messagebox.showwarning("Empty Input", "No files in the input directory!")
@@ -124,7 +130,7 @@ class BeginDialog(tk.Toplevel):
         self.wm_deiconify()
         self.uid.focus_force()
         self.wait_window()
-        return self.return_uid, self.return_restart
+        return self.return_uid, self.return_restart, self.return_balbc
 
     def cancel(self):
         self.destroy()
@@ -143,7 +149,7 @@ class Dataset(object):
 
             bd = BeginDialog(root)
             bd.resizable(False, False)
-            uid, restart = bd.show()
+            uid, restart, balbc = bd.show()
             root.destroy()
 
             if uid != "":

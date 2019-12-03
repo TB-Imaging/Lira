@@ -723,7 +723,6 @@ class PredictionGridEditor(object):
             self.update_img()
             self.updating_img = False
 
-
     def fill_selected_area(self):
         # Change currently selected area to this classification. We update the prediction grid, but we also update
         # the display by extracting the selected section and updating the overlay of only that section,
