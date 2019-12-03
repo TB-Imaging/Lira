@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import tkinter as tk
 import os
+import json
 import glob
 from tkinter import messagebox
 
@@ -83,12 +84,25 @@ class BeginDialog(tk.Toplevel):
             self.balbc.config(state=tk.NORMAL)
             self.kramnik.config(state=tk.NORMAL)
         else:
+            self.update_model()
             self.var_user.set(ustring)
+            self.update_model()
             self.reset.config(state=tk.NORMAL)
             if not self.var_restart.get():
                 self.balbc.config(state=tk.DISABLED)
                 self.kramnik.config(state=tk.DISABLED)
         return True
+
+    def update_model(self):
+        uid = self.var_user.get()
+        progress_dir = os.path.join(archive_dir, "{}.json".format(uid))
+        with open(progress_dir, 'r') as f:
+            progress = json.load(f)
+            if "model" in progress:
+                self.var_model.set(progress["model"])
+            else:
+                self.var_model.set("kramnik")
+
 
     def begin(self):
         # Assigning these variables to ensure that the program only continues
@@ -115,6 +129,7 @@ class BeginDialog(tk.Toplevel):
             self.var_uid.set('')
         else:
             self.var_uid.set(self.var_user.get())
+            self.update_model()
         self.reset.config(state=tk.NORMAL)
 
     def deleteUser(self):
