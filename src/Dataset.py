@@ -38,25 +38,29 @@ class BeginDialog(tk.Toplevel):
         self.userMenu = tk.OptionMenu(self, self.var_user, *self.users, command=self.setUser)
         self.userMenu.grid(row=0, column=1, columnspan=3, sticky=tk.W, padx=10, pady=5)
         tk.Button(self, text="Delete", command=self.deleteUser).grid(row=0, column=0, padx=10, pady=5)
-        tk.Label(self, text="User ID").grid(row=1)
-        tk.Label(self, text="Restart").grid(row=2, columnspan=2, sticky=tk.E)
-        tk.Label(self, text="BALB/c").grid(row=3, columnspan=2, sticky=tk.E)
+        tk.Label(self, text="User ID:").grid(row=1)
+        tk.Label(self, text="Model:").grid(row=2, column=0)
+        tk.Label(self, text="Restart:").grid(row=3)
+        # tk.Label(self, text="BALB/c").grid(row=4, columnspan=2, sticky=tk.E)
 
         self.var_uid = tk.StringVar()
         self.var_restart = tk.BooleanVar()
-        self.var_balbc = tk.BooleanVar()
+        self.var_model = tk.StringVar()
+        self.var_model.set('kramnik')
         self.return_uid = ""
         self.return_restart = False
-        self.return_balbc = False
+        self.return_model = 'kramnik'
 
         vcmd = (self.register(self.enterUser), '%P')
         self.uid = tk.Entry(self, textvariable=self.var_uid, validate="all",
                             validatecommand=vcmd)
         self.uid.grid(row=1, column=1, pady=10, padx=10, columnspan=2)
         self.reset = tk.Checkbutton(self, variable=self.var_restart, state=tk.DISABLED)
-        self.reset.grid(row=2, column=2, pady=5, sticky=tk.W)
-        self.balbc = tk.Checkbutton(self, variable=self.var_balbc)
-        self.balbc.grid(row=3, column=2, pady=0, sticky=tk.W)
+        self.reset.grid(row=3, column=1, pady=5, sticky=tk.W)
+        tk.Radiobutton(self, text="BALB/c", value="balbc", variable=self.var_model).grid(row=2, column=1, pady=0,
+                                                                                         sticky=tk.W)
+        tk.Radiobutton(self, text="Kramnik", value="kramnik", variable=self.var_model).grid(row=2, column=2, pady=0,
+                                                                                            sticky=tk.W)
         beginButton = tk.Button(self, text="Begin", command=self.begin)
         cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
         beginButton.grid(row=4, column=2, sticky=tk.E, pady=5, padx=5)
@@ -88,7 +92,7 @@ class BeginDialog(tk.Toplevel):
         elif inputFolderLoaded():
             self.return_uid = self.var_uid.get()
             self.return_restart = self.var_restart.get()
-            self.return_balbc = self.var_balbc.get()
+            self.return_model = self.var_model.get()
             self.destroy()
         else:
             messagebox.showwarning("Empty Input", "No files in the input directory!")
@@ -130,7 +134,7 @@ class BeginDialog(tk.Toplevel):
         self.wm_deiconify()
         self.uid.focus_force()
         self.wait_window()
-        return self.return_uid, self.return_restart, self.return_balbc
+        return self.return_uid, self.return_restart, self.return_model
 
     def cancel(self):
         self.destroy()
@@ -149,7 +153,7 @@ class Dataset(object):
 
             bd = BeginDialog(root)
             bd.resizable(False, False)
-            uid, restart, balbc = bd.show()
+            uid, restart, model = bd.show()
             root.destroy()
 
             if uid != "":
