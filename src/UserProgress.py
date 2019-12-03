@@ -4,9 +4,8 @@ from base import *
 
 class UserProgress(object):
     #For use with our json for keeping track of user progress
-    def __init__(self, uid):
+    def __init__(self, uid, model):
         self.uid = uid
-
         #Create json for this uid
         self.archive_dir = "../data/user_progress/" #where we will create and store the .json file for each user's progress
 
@@ -20,10 +19,23 @@ class UserProgress(object):
           "prediction_grids_image": 0,
           "prediction_grids_transparency_factor": 0.33,#Default value
           "prediction_grids_resize_factor": 0.1,#Default value
+          "model": model
         }
-
         #Get archive fpath
         self.archive_fpath = os.path.join(self.archive_dir, "{}.json".format(uid))
+        self.update_to_model()
+
+    def update_to_model(self):
+        if file_exists(self.archive_fpath):
+
+            with open(self.archive_fpath, 'r') as f:
+                progress = json.load(f)
+                if "model" not in progress:
+                    progress["model"] = "kramnik"
+
+            with open(self.archive_fpath, 'w') as f:
+                json.dump(progress, f)
+
 
     def ensure_progress_json(self):
         #Create our json with our initial_progress attribute if it doesnt already exist
@@ -57,7 +69,8 @@ class UserProgress(object):
         with open(self.archive_fpath, 'r') as f:
             return json.load(f) != self.initial_progress
 
-    def restart(self):
+    def restart(self, model):
+        self.initial_progress["model"] = model
         #Set our json back to the default starting json.
         with open(self.archive_fpath, 'w') as f:
             json.dump(self.initial_progress, f)

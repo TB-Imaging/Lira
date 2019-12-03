@@ -172,6 +172,7 @@ class Dataset(object):
             if uid != "":
                 self.uid = uid
                 self.restart = restart
+                self.model = model
             else:
                 sys.exit("Exiting...")
 
@@ -181,8 +182,7 @@ class Dataset(object):
             self.uid = input("Input your Unique/User ID for this Dataset: ")
 
         # Initialize user progress to existing progress if it exists and default starting progress otherwise
-        self.progress = UserProgress(self.uid)
-
+        self.progress = UserProgress(self.uid, model=self.model)
         # Check whether to reload the imgs archive, and possibly restart our progress
         if restart is not None:
             self.restart = restart
@@ -194,7 +194,7 @@ class Dataset(object):
         if self.restart:
             # User wants to restart, both imgs and progress
             self.imgs = Images(restart=True)
-            self.progress.restart()
+            self.progress.restart(model=self.model)
             self.type_one_detections = TypeOneDetections(self, self.uid, restart=True)
             self.prediction_grids = PredictionGrids(self, self.uid, restart=True)
 
