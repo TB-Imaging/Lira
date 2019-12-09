@@ -34,12 +34,13 @@ class PredictionGrids(object):
 
         # Classifiers
         if self.dataset.progress["model"] == "kramnik":
-            self.type_one_classifier = load_model("../classifiers/type_one_classifier.h5")  # For type-one classification
-            self.non_type_one_classifier = load_model(
-                "../classifiers/non_type_one_classifier.h5")  # For non-type-one classification
-        else:
-            print("REPLACE STANDARD KRAMNIK CLASSIFIER WITH BALB/C")
+            # For type-one classification
+            self.type_one_classifier = load_model("../classifiers/type_one_classifier.h5")
+            # For non-type-one classification
             self.non_type_one_classifier = load_model("../classifiers/non_type_one_classifier.h5")
+        else:
+            # print("REPLACE STANDARD KRAMNIK CLASSIFIER WITH BALB/C")
+            self.non_type_one_classifier = load_model("../classifiers/balbc_classifier.h5")
 
     def generate(self):
         # Loops through a grid of subsections in our image as input to our models,
@@ -153,6 +154,12 @@ class PredictionGrids(object):
 
                 # Get batch outputs from the type one classifier
                 non_type_one_predictions = self.non_type_one_classifier.predict(non_type_one_subsections)
+                if self.dataset.progress["model"] == "balbc":
+                    non_type_one_predictions = np.insert(non_type_one_predictions, 1, 0, axis=1)
+                    # print("ntop:", non_type_one_predictions)
+                    # print("ntop:", non_type_one_predictions[:, 1:])
+                    # print("pg:", prediction_grid[non_type_one_subsection_batch_indices, 2:5].shape)
+                    # print("ntosbi:", non_type_one_subsection_batch_indices)
 
                 # Convert the local output classification enumeration of this classifier to the global ones and insert
                 prediction_grid[non_type_one_subsection_batch_indices, 0] = non_type_one_predictions[:, 0]
