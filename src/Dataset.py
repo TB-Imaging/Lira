@@ -84,9 +84,7 @@ class BeginDialog(tk.Toplevel):
             self.balbc.config(state=tk.NORMAL)
             self.kramnik.config(state=tk.NORMAL)
         else:
-            self.update_model()
             self.var_user.set(ustring)
-            self.update_model()
             self.reset.config(state=tk.NORMAL)
             if not self.var_restart.get():
                 self.balbc.config(state=tk.DISABLED)
@@ -146,7 +144,6 @@ class BeginDialog(tk.Toplevel):
         data_path2 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9][0-9].npy'
         data_path3 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9][0-9][0-9].npy'
         data_files = glob.glob(data_path1) + glob.glob(data_path2) + glob.glob(data_path3)
-        # print(user_file, data_path1, data_files)
         for file in data_files:
             os.remove(file)
         os.remove(os.path.join(archive_dir, user_file))
