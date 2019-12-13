@@ -3,8 +3,9 @@ suffix = '.vsi';
 zplane = 0;
 // flattenFolders = true; // this flag controls output directory structure
 currentDirectory = File.getParent(getDirectory("startup"));
-inputFolder = currentDirectory + '/Input/';
-outputFolder = currentDirectory + '/Output/';
+grandparentDirectory = File.getParent(File.getParent(currentDirectory));
+inputFolder = grandparentDirectory + '/Input Images/';
+outputFolder = grandparentDirectory + '/Input Images/';
 
 // suffixFile should be a basic .txt file that contains one of the following:
 // .jpg
@@ -12,16 +13,17 @@ outputFolder = currentDirectory + '/Output/';
 // .tiff
 // .png
 
-suffixFile = currentDirectory + '/suffix.txt';
-outputSuffix = File.openAsString(suffixFile);
-outputSuffix = substring(outputSuffix, 0, lengthOf(outputSuffix) - 1);
+// suffixFile = currentDirectory + '/suffix.txt';
+// outputSuffix = File.openAsString(suffixFile);
+outputSuffix = '.png' // substring(outputSuffix, 0, lengthOf(outputSuffix) - 1);
 
+// print(grandparentDirectory);
+// print(inputFolder);
 list = getFileList(inputFolder);
 
 for (i=0; i < list.length; i++) {
-  // print(list[i]);
   if (endsWith(list[i], suffix)) {
-    print(list[i]);
+    // print(list[i]);
     vsiFile = list[i];
     processFile(inputFolder, outputFolder, vsiFile);
   }
