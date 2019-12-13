@@ -5,12 +5,13 @@ import os
 import openslide
 from openslide_python_fix import _load_image_lessthan_2_29, _load_image_morethan_2_29
 
+from convert_vsi import convert_vsi
 from LiraExceptions import InputEmptyError
 from base import *
 from ProgressBar import ProgressRoot
 
 
-def read_openslide_img(img_file, upper_left):
+def read_openslide_img(img_file):
     """
     Opens img_file, converts to PIL image,
     and returns the image.
@@ -29,8 +30,7 @@ def read_openslide_img(img_file, upper_left):
         openslide.lowlevel._load_image = _load_image_lessthan_2_29
     if w_rec * h_rec >= 2 ** 29:
         try:
-            region1 = img.read_region((upper_left[0],
-                                       upper_left[1]),
+            region1 = img.read_region((0, 0),
                                       0, (w_rec_half, h_rec)).convert('RGB')
 
             region2 = img.read_region((w_rec_half,
@@ -39,13 +39,11 @@ def read_openslide_img(img_file, upper_left):
             return region1, region2
 
         except IOError:
-            region1 = img.read_region((upper_left[0],
-                                       upper_left[1]),
+            region1 = img.read_region((0, 0),
                                       0, (w_rec, h_rec)).convert('RGB')
             return region1,
     else:
-        region1 = img.read_region((upper_left[0],
-                                   upper_left[1]),
+        region1 = img.read_region((0, 0),
                                   0, (w_rec, h_rec)).convert('RGB')
         return region1,
 
@@ -69,10 +67,16 @@ class Images(object):
             """
             # Delete all files in the archive directory if restarting
             clear_dir(self.archive_dir)
-            img_names = [name for name in fnames(self.img_dir)]
+            img_names = [name for name in fnames(self.img_dir, recursive=False)]
+            for name in img_names:
+                if name.endswith(".vsi"):
+                    convert_vsi(".png")
+                    img_names = [name for name in fnames(self.img_dir, recursive=False)]
+                    break
             openslide_image_types = {".svs", ".tif", ".vms", ".vmu", ".ndpi", ".scn",
                                 ".mrxs", ".tiff", ".svslide"}
             # Define a callback to be passed to the Asynchronous Progress Bar
+
             def archive_callback(index):
                 i = index
                 fname = img_names[i]
@@ -85,7 +89,7 @@ class Images(object):
                 dst_fpath = os.path.join(self.archive_dir, "{}.npy".format(len(self.archives)))
                 _, src_suffix = os.path.splitext(src_fpath)
                 if src_suffix in openslide_image_types:
-                    slides = read_openslide_img(src_fpath, upper_left=(0, 0))
+                    slides = read_openslide_img(src_fpath)
                     if len(slides) == 2:
                         dst_fpath_a = dst_fpath
                         self.archives.append(dst_fpath_a)

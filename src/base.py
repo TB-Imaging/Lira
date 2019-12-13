@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import sys
 
-def fnames(dir):
+def fnames(dir, recursive=True):
     """
     Arguments:
         dir: directory to recursively traverse. Should be a string.
@@ -15,6 +15,8 @@ def fnames(dir):
     """
     paths = []
     for (path, dirs, fnames) in os.walk(dir):
+        if not recursive and len(path) > len(dir):
+            continue
         for fname in fnames:
             yield fname
 
