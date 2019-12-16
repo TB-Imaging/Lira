@@ -10,7 +10,7 @@ from EditingDataset import EditingDataset
 
 #IMAGES TESTS - assumes given test images
 
-imgs = Images()
+imgs = Images("unit_test")
 
 i = 0
 for img in imgs:

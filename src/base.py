@@ -77,20 +77,21 @@ def is_float(x):
     except ValueError:
         return False
 
-def clear_dir(d, f=None):
+def clear_dir(d, f=None, recursive=False):
     #Removes all files and subdirectories from directory d if they match the given condition f
-    for fname in os.listdir(d):
-        fpath = os.path.join(d, fname)
-        try: 
-            if f!=None:
-                #ensure the condition is true otherwise skip
-                if not f(fpath):
-                    continue
-
-            if os.path.isfile(fpath):
-                os.unlink(fpath)
-            elif os.path.isdir(fpath): 
-                shutil.rmtree(fpath)
-        except:
-            pass
+    for (path, dirs, fnames) in os.walk(d):
+        if not recursive and len(path) > len(d):
+            continue
+        for fname in fnames:
+            try:
+                if f!=None:
+                    #ensure the condition is true otherwise skip
+                    if not f(fname):
+                        continue
+                if os.path.isfile(os.path.join(path, fname)):
+                    os.unlink(os.path.join(path, fname))
+                elif os.path.isdir(os.path.join(path, fname)):
+                    shutil.rmtree(os.path.join(path, fname))
+            except Exception as e:
+                print(str(e))
 

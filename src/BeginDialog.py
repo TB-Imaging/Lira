@@ -7,11 +7,11 @@ import glob
 from base import *
 from tktools import center_left_window
 
-archive_dir = "../data/user_progress/"
+progress_dir = "../data/user_progress/"
 
 
 def get_user_list():
-    users = ['.'.join(f.split('.')[:-1]) for f in os.listdir(archive_dir) if f.endswith('.json')]
+    users = ['.'.join(f.split('.')[:-1]) for f in os.listdir(progress_dir) if f.endswith('.json')]
     return users
 
 
@@ -86,8 +86,8 @@ class BeginDialog(tk.Toplevel):
 
     def update_model(self):
         uid = self.var_user.get()
-        progress_dir = os.path.join(archive_dir, "{}.json".format(uid))
-        with open(progress_dir, 'r') as f:
+        progress_file = os.path.join(progress_dir, "{}.json".format(uid))
+        with open(progress_file, 'r') as f:
             progress = json.load(f)
             if "model" in progress:
                 self.var_model.set(progress["model"])
@@ -133,13 +133,14 @@ class BeginDialog(tk.Toplevel):
         # data_folders =
         user_file = self.var_user.get() + '.json'
         user_img_prefix = self.var_user.get() + '_img_'
-        data_path1 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9].npy'
-        data_path2 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9][0-9].npy'
-        data_path3 = os.path.join(data_dir, '*', user_img_prefix) + '[0-9][0-9][0-9].npy'
-        data_files = glob.glob(data_path1) + glob.glob(data_path2) + glob.glob(data_path3)
-        for file in data_files:
-            os.remove(file)
-        os.remove(os.path.join(archive_dir, user_file))
+        clear_dir(
+            data_dir,
+            lambda f:
+                f.startswith(user_img_prefix) and
+                f[len(user_img_prefix):-4].isnumeric(),
+            recursive=True
+        )
+        os.remove(os.path.join(progress_dir, user_file))
         self.users = ['-'] + list(sorted(get_user_list()))
         self.userSet = set(self.users[1:])
         self.var_user.set('-')

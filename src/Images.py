@@ -59,6 +59,7 @@ class Images(object):
         self.img_dir = "../../Input Images/"  # where image files are stored
         self.archive_dir = "../data/images/"  # where we will create and store the .npy archive files
         self.archives = []  # where we will store list of full filepaths for each archive in our archive_dir
+        username_prefix = "{}_img_".format(username)
 
         if restart:
             """
@@ -67,7 +68,11 @@ class Images(object):
             """
             # Delete all files in the archive directory with the relevant username if restarting
 
-            clear_dir(self.archive_dir, lambda f: f.startswith(username + '_') and f[len(username)+1:-4].isnumeric())
+            clear_dir(self.archive_dir,
+                      lambda f:
+                          f.split(os.sep)[-1].startswith(username_prefix) and
+                          f.split(os.sep)[-1][len(username_prefix):-4].isnumeric()
+            )
             img_names = [name for name in fnames(self.img_dir, recursive=False)]
             for name in img_names:
                 if name.endswith(".vsi"):
@@ -87,14 +92,15 @@ class Images(object):
                 )
                 # Read src, Check max shape, Create archive at dst, add dst to archive list
                 src_fpath = os.path.join(self.img_dir, fname)
-                dst_fpath = os.path.join(self.archive_dir, "{}_{}.npy".format(username, len(self.archives)))
+                dst_fpath = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix, len(self.archives)))
                 _, src_suffix = os.path.splitext(src_fpath)
                 if src_suffix in openslide_image_types:
                     slides = read_openslide_img(src_fpath)
                     if len(slides) == 2:
                         dst_fpath_a = dst_fpath
                         self.archives.append(dst_fpath_a)
-                        dst_fpath_b = os.path.join(self.archive_dir, "{}_{}.npy".format(username, len(self.archives)))
+                        dst_fpath_b = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix,
+                                                                                           len(self.archives)))
                         self.archives.append(dst_fpath_b)
                         slide_npy_a = np.array(slides[0])
                         slide_npy_b = np.array(slides[1])
@@ -126,14 +132,14 @@ class Images(object):
             # use existing archive files
             for fname in fnames(self.archive_dir):
                 fn = fname.split(os.sep)[-1]
-                if fn.startswith(username + '_') and fn[len(username)+1:-4].isnumeric():
+                if fn.startswith(username + '_img_') and fn[len(username_prefix):-4].isnumeric():
                     self.archives.append(os.path.join(self.archive_dir, fname))
 
         # Regardless of this we sort the result, since it depends on the nondeterministic ordering of the os.walk
         # generator in fnames()
         # We have to get the filename integer number, since otherwise we will end up with stuff like 0, 10, 11,
         # 1 instead of 0, 1, 10, 11
-        self.archives = sorted(self.archives, key=lambda x: int(x.split(os.sep)[-1][len(username)+1:-4]))
+        self.archives = sorted(self.archives, key=lambda x: int(x.split(os.sep)[-1][len(username_prefix):-4]))
 
     def __iter__(self):
         for archive in self.archives:
