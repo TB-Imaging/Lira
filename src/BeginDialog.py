@@ -107,15 +107,15 @@ class BeginDialog(tk.Toplevel):
             messagebox.showwarning("Empty User ID", "User ID is required.")
         elif self.var_uid.get() == "-":
             messagebox.showwarning("Bad ID", "Inappropriate User ID. Use a different User ID.")
-        elif inputFolderLoaded():
+        elif not inputFolderLoaded() and (self.var_restart.get() or self.var_uid.get() not in self.userSet):
+            messagebox.showwarning("Empty Input", "No files in the input directory!")
+        else:
             self.return_uid = self.var_uid.get()
             self.return_restart = self.var_restart.get()
             self.return_model = self.var_model.get()
             self.destroy()
-        else:
-            messagebox.showwarning("Empty Input", "No files in the input directory!")
 
-    def setUser(self, str):
+    def setUser(self, _):
         if self.var_user.get() == '-':
             self.var_uid.set('')
         else:

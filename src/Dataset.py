@@ -53,7 +53,7 @@ class Dataset(object):
 
         if self.restart:
             # User wants to restart, both imgs and progress
-            self.imgs = Images(restart=True)
+            self.imgs = Images(self.uid, restart=True)
             self.progress.restart(model=self.model)
             self.type_one_detections = TypeOneDetections(self, self.uid, restart=True)
             self.prediction_grids = PredictionGrids(self, self.uid, restart=True)
@@ -62,13 +62,13 @@ class Dataset(object):
             # User does not want to restart. Defaults to this if they didn't put in "Y"
             if self.progress.editing_started():
                 # If they were already editing these images, resume progress
-                self.imgs = Images(restart=False)
+                self.imgs = Images(self.uid, restart=False)
                 self.type_one_detections = TypeOneDetections(self, self.uid, restart=False)
                 self.prediction_grids = PredictionGrids(self, self.uid, restart=False)
             else:
                 # If they weren't already editing these images (i.e. they haven't started editing), load the images.
                 # No need to restart our progress since it's already the initial value.
-                self.imgs = Images(restart=True)
+                self.imgs = Images(self.uid, restart=True)
                 self.type_one_detections = TypeOneDetections(self, self.uid, restart=True)
                 self.prediction_grids = PredictionGrids(self, self.uid, restart=True)
 

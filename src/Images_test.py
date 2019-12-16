@@ -2,7 +2,7 @@ import numpy as np
 
 from Images import Images
 
-imgs = Images(restart=True)
+imgs = Images("unit_test", restart=True)
 
 for img in imgs:
     print(img.shape)
@@ -14,4 +14,4 @@ imgs[-1] = imgs[0]
 print(np.all(imgs[0] == imgs[-1]))
 print(len(imgs))
 
-imgs = Images(restart=False)
+imgs = Images("unit_test", restart=False)
