@@ -23,4 +23,15 @@ echo "GenericName[en_US]=Classify Bacterial Lesions" >> ~/.local/share/applicati
 
 curl https://downloads.imagej.net/fiji/latest/fiji-linux64.zip --output $DIR/fiji.zip
 unzip $DIR/fiji.zip -d $DIR/src/
+rm $DIR/fiji.zip
 
+mkdir $DIR/../Input\ Images
+mkdir $DIR/../Output\ Stats
+mkdir $DIR/data
+mkdir $DIR/data/images
+mkdir $DIR/data/user_progress
+mkdir $DIR/data/type_one_detections_before_editing
+mkdir $DIR/data/type_one_detections_after_editing
+mkdir $DIR/data/prediction_grids_before_editing
+mkdir $DIR/data/prediction_grids_after_editing
+mkdir $DIR/data/unit_tests
