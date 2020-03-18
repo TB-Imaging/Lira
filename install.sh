@@ -20,3 +20,7 @@ echo "Name=Lira" >> ~/.local/share/applications/Lira.desktop
 echo "Comment=Launch L.I.R.A." >> ~/.local/share/applications/Lira.desktop
 echo "Icon=$DIR/lira/icons/xdiagnose-lira.png" >> ~/.local/share/applications/Lira.desktop
 echo "GenericName[en_US]=Classify Bacterial Lesions" >> ~/.local/share/applications/Lira.desktop
+
+curl https://downloads.imagej.net/fiji/latest/fiji-linux64.zip --output $DIR/fiji.zip
+unzip $DIR/fiji.zip -d $DIR/src/
+
