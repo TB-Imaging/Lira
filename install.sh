@@ -25,6 +25,12 @@ rm $DIR/fiji.zip
 sudo apt-get install python3-openslide
 sudo apt-get install openslide-tools
 
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt-get install git-lfs
+git lfs install
+git lfs track $DIR/classifiers/*h5
+git lfs pull
+
 mkdir $DIR/../Input\ Images
 mkdir $DIR/../Output\ Stats
 mkdir $DIR/data
