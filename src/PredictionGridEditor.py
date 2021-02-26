@@ -13,81 +13,12 @@ from base import *
 from tktools import center_left_window
 
 
-class GetResizeTransparencyDialog(Toplevel):
-
-    def __init__(self, parent):
-        Toplevel.__init__(self, parent)
-        self.parent = parent
-        self.title = "Title"
-        Label(self, text="Transparency Factor").grid(row=0, column=0, columnspan=2, padx=10, pady=5)
-        Label(self, text="Resize Factor").grid(row=2, column=0, columnspan=2, padx=10, pady=5)
-        self.resizeVar = DoubleVar()
-        self.transparencyVar = DoubleVar()
-        self.resizeVar.set(1.0)
-        self.transparencyVar.set(1.0)
-        self.transparencyScale = Scale(
-            self,
-            from_=0,
-            to=1,
-            resolution=0.01,
-            variable=self.transparencyVar,
-            orient=HORIZONTAL
-        )
-        self.resizeScale = Scale(
-            self,
-            from_=0,
-            to=1,
-            resolution=0.01,
-            variable=self.resizeVar,
-            orient=HORIZONTAL
-        )
-        self.transparencyScale.grid(row=1, column=0, columnspan=2, sticky=E + W, padx=10, pady=5)
-        self.resizeScale.grid(row=3, column=0, columnspan=2, sticky=E + W, padx=10, pady=5)
-        self.protocol("WM_DELETE_WINDOW", self.cancel)
-        acceptButton = Button(self, text="Accept", command=self.accept)
-        cancelButton = Button(self, text="Cancel", command=self.cancel)
-        acceptButton.grid(row=4, column=1, sticky=E, pady=5, padx=5)
-        cancelButton.grid(row=4, column=0, sticky=W, padx=5)
-
-    def show(self):
-        self.wm_deiconify()
-        self.wait_window()
-        return self.resizeVar.get(), self.transparencyVar.get()
-
-    def accept(self):
-        self.destroy()
-
-    def cancel(self):
-        self.transparencyVar.set(-1)
-        self.resizeVar.set(-1)
-        self.destroy()
-
-
 class PredictionGridEditor(object):
     def __init__(self, dataset):
         # Initialize our editor on this user's last edited image
         self.dataset = dataset
-        root = Tk()
-        root.title("L.I.R.A.")
-        root.withdraw()
-        center_left_window(root, 0, 0)
-        # Ask them if they want to change the current values for resize and transparency if
-        if messagebox.askyesno("Change Values",
-                               "Would you like to change the transparency and resize factors from their current "
-                               "values? (These are the default values if you have not started editing)"):
-            dialog = GetResizeTransparencyDialog(root)
-            center_left_window(dialog, 158, 193)
-            dialog.resizable(False, False)
-            self.editor_resize_factor, self.editor_transparency_factor = dialog.show()
-            if self.editor_transparency_factor < 0.01 or self.editor_transparency_factor < 0.01:
-                self.editor_resize_factor = self.dataset.progress["prediction_grids_resize_factor"]
-                self.editor_transparency_factor = self.dataset.progress["prediction_grids_transparency_factor"]
-            root.destroy()
-        else:
-            # Just use the current values
-            self.editor_resize_factor = self.dataset.progress["prediction_grids_resize_factor"]
-            self.editor_transparency_factor = self.dataset.progress["prediction_grids_transparency_factor"]
-            root.destroy()
+        self.editor_resize_factor = self.dataset.progress["prediction_grids_resize_factor"]
+        self.editor_transparency_factor = self.dataset.progress["prediction_grids_transparency_factor"]
 
         # Parameters
         self.classification_key = ["Healthy Tissue", "Type I - Caseum", "Type II", "Empty Slide", "Type III",
