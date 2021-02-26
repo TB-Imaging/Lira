@@ -9,19 +9,6 @@ from PIL import ImageTk, Image
 from base import *
 from tktools import center_left_window
 
-progress_dir = "../data/user_progress/"
-
-
-def get_user_list():
-    users = ['.'.join(f.split('.')[:-1]) for f in os.listdir(progress_dir) if f.endswith('.json')]
-    return users
-
-
-def inputFolderLoaded():
-    img_dir = "../../Input Images/"
-    return len([fname for fname in fnames(img_dir)]) > 0
-
-
 class ImageResolutions(tk.Toplevel):
 
     def __init__(self, parent, images_pathnames):
@@ -38,6 +25,8 @@ class ImageResolutions(tk.Toplevel):
         self.lastButton.grid(row=3, column=0, padx=10, pady=5)
         self.nextButton = tk.Button(self, text="Next", command=self.nextImage)
         self.nextButton.grid(row=3, column=2, padx=10, pady=5)
+        if len(self.resolutions) == 1:
+            self.nextButton.config(state=tk.DISABLED)
         tk.Label(self, text="Input the resolution for each image before proceeding").grid(
             row=0, column=0, columnspan=3, padx=5)
         tk.Label(self, text="Resolution X:").grid(row=1, column=0, sticky=tk.E)
