@@ -2,6 +2,7 @@ import sys
 import cv2
 import numpy as np
 import os
+import json
 import openslide
 from tkinter import *
 from tkinter import messagebox
@@ -69,6 +70,7 @@ class Images(object):
     def __init__(self, username, restart=False):
         self.img_dir = "../../Input Images/"  # where image files are stored
         self.archive_dir = "../data/images/"  # where we will create and store the .npy archive files
+        fname_dir = "../data/filenames/"
         self.archives = []  # where we will store list of full filepaths for each archive in our archive_dir
         self.thumbnails = []  # where smaller thumbnail image filepaths will be stored
         username_prefix = "{}_img_".format(username)
@@ -86,9 +88,9 @@ class Images(object):
                           f.split(os.sep)[-1][len(username_prefix):-4].isnumeric()
             )
             img_names = [name for name in fnames(self.img_dir, recursive=False)]
-            # Superfluous names to pass to ImageResolutions to make
-            # it easier for the user to identify their images
-            img_names_res = []
+            # Name of every image after large images have been split into two
+            # or three constituent images
+            img_names_all = []
             for name in img_names:
                 if name.endswith(".vsi"):
                     convert_vsi(".png")
@@ -118,14 +120,14 @@ class Images(object):
                         thumb_fpath_a = thumb_fpath
                         self.archives.append(dst_fpath_a)
                         self.thumbnails.append(thumb_fpath_a)
-                        img_names_res.append("{} (1)".format(fname))
+                        img_names_all.append("{} (1)".format(fname))
                         dst_fpath_b = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix,
                                                                                            len(self.archives)))
                         thumb_fpath_b = os.path.join(self.archive_dir, "{}{}_thumbnail.npy".format(username_prefix,
                                                                                            len(self.archives)))
                         self.archives.append(dst_fpath_b)
                         self.thumbnails.append(thumb_fpath_b)
-                        img_names_res.append("{} (2)".format(fname))
+                        img_names_all.append("{} (2)".format(fname))
                         slide_npy_a = np.array(slides[0])
                         slide_npy_b = np.array(slides[1])
                         thumbnail_a = cv2.resize(slide_npy_a, (0, 0),
@@ -148,7 +150,7 @@ class Images(object):
                         np.save(thumb_fpath, thumbnail)
                         self.archives.append(dst_fpath)
                         self.thumbnails.append(thumb_fpath)
-                        img_names_res.append(fname)
+                        img_names_all.append(fname)
                 elif src_suffix == '.vsi':
                     # These should be converted to png before the code gets here
                     return
@@ -171,11 +173,11 @@ class Images(object):
                                 self.archives.append(dst_fpath)
                                 self.thumbnails.append(thumb_fpath)
                                 if count > 1:
-                                    img_names_res.append("{} ({})".format(
+                                    img_names_all.append("{} ({})".format(
                                         fname, i * image.shape[1] * image.shape[2] + j * image.shape[2] + k + 1)
                                     )
                                 else:
-                                    img_names_res.append(fname)
+                                    img_names_all.append(fname)
                     pass
                 else:  # Primarily png and other images readable by numpy
                     img_npy = cv2.imread(src_fpath)
@@ -186,7 +188,7 @@ class Images(object):
                     np.save(thumb_fpath, thumbnail)
                     self.archives.append(dst_fpath)
                     self.thumbnails.append(thumb_fpath)
-                    img_names_res.append(fname)
+                    img_names_all.append(fname)
 
             # The root process completes the callback's task while keeping track of progress
             print(len(img_names))
@@ -206,9 +208,12 @@ class Images(object):
             root.title("Input Image Resolutions")
             root.withdraw()
 
-            print(self.thumbnails, img_names_res)
+            # save img names to use in stat output
+            self.fnames = img_names_all
+            with open(os.path.join(fname_dir, '{}_fnames.json'.format(username)), 'w') as f:
+                json.dump(self.fnames, f)
 
-            archives_with_pathnames = zip(self.thumbnails, img_names_res)
+            archives_with_pathnames = zip(self.thumbnails, img_names_all)
 
             ir = ImageResolutions(root, archives_with_pathnames)
             ir.resizable(False, False)
@@ -236,6 +241,8 @@ class Images(object):
             print("")
 
         else:
+            with open(os.path.join(fname_dir, '{}_fnames.json'.format(username)), 'r') as f:
+                self.fnames = json.load(f)
             # use existing archive files
             for fname in fnames(self.archive_dir):
                 fn = fname.split(os.sep)[-1]
