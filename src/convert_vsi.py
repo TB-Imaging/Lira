@@ -12,7 +12,7 @@ legal_formats = {
 def convert_vsi(format):
     if format not in legal_formats:
         raise Exception(
-            'format should one of the following: {}. format was {}' \
+            'format should be one of the following: {}. format was {}' \
             .format(str(list(legal_formats)), format)
         )
     # print('saving arguments for ' + format)
