@@ -93,9 +93,9 @@ class ImageResolutions(tk.Toplevel):
 
         print(self.images_pathnames[self.index][0])
         self.img = np.load(self.images_pathnames[self.index][0])
-        self.img = cv2.resize(self.img, (0, 0),
-                              fx=280 / self.img.shape[1],
-                              fy=280 / self.img.shape[0])
+        # self.img = cv2.resize(self.img, (0, 0), switching to thumbnails
+        #                       fx=280 / self.img.shape[1],
+        #                       fy=280 / self.img.shape[0])
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)  # We need to convert so it will display the proper colors
 
     def validateResX(self, numstring):

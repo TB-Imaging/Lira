@@ -3,13 +3,24 @@ import cv2
 import numpy as np
 import os
 import openslide
+from tkinter import *
+from tkinter import messagebox
+from PIL import ImageTk, Image
+import czifile as czf
 from openslide_python_fix import _load_image_lessthan_2_29, _load_image_morethan_2_29
 
 from convert_vsi import convert_vsi
 from LiraExceptions import InputEmptyError
 from base import *
 from ProgressBar import ProgressRoot
+from ImageResolutions import ImageResolutions
 
+def q_key_press(event=None):
+    if messagebox.askquestion(
+        'Quit',
+        'Would you like to quit?'
+    ) == 'yes':
+        sys.exit('Exiting...')
 
 def read_openslide_img(img_file):
     """
@@ -59,6 +70,7 @@ class Images(object):
         self.img_dir = "../../Input Images/"  # where image files are stored
         self.archive_dir = "../data/images/"  # where we will create and store the .npy archive files
         self.archives = []  # where we will store list of full filepaths for each archive in our archive_dir
+        self.thumbnails = []  # where smaller thumbnail image filepaths will be stored
         username_prefix = "{}_img_".format(username)
 
         if restart:
@@ -74,6 +86,9 @@ class Images(object):
                           f.split(os.sep)[-1][len(username_prefix):-4].isnumeric()
             )
             img_names = [name for name in fnames(self.img_dir, recursive=False)]
+            # Superfluous names to pass to ImageResolutions to make
+            # it easier for the user to identify their images
+            img_names_res = []
             for name in img_names:
                 if name.endswith(".vsi"):
                     convert_vsi(".png")
@@ -81,6 +96,7 @@ class Images(object):
                     break
             openslide_image_types = {".svs", ".tif", ".vms", ".vmu", ".ndpi", ".scn",
                                 ".mrxs", ".tiff", ".svslide"}
+
             # Define a callback to be passed to the Asynchronous Progress Bar
 
             def archive_callback(index):
@@ -93,41 +109,132 @@ class Images(object):
                 # Read src, Check max shape, Create archive at dst, add dst to archive list
                 src_fpath = os.path.join(self.img_dir, fname)
                 dst_fpath = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix, len(self.archives)))
+                thumb_fpath = os.path.join(self.archive_dir, "{}{}_thumbnail.npy".format(username_prefix, len(self.archives)))
                 _, src_suffix = os.path.splitext(src_fpath)
                 if src_suffix in openslide_image_types:
                     slides = read_openslide_img(src_fpath)
                     if len(slides) == 2:
                         dst_fpath_a = dst_fpath
+                        thumb_fpath_a = thumb_fpath
                         self.archives.append(dst_fpath_a)
+                        self.thumbnails.append(thumb_fpath_a)
+                        img_names_res.append("{} (1)".format(fname))
                         dst_fpath_b = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix,
                                                                                            len(self.archives)))
+                        thumb_fpath_b = os.path.join(self.archive_dir, "{}{}_thumbnail.npy".format(username_prefix,
+                                                                                           len(self.archives)))
                         self.archives.append(dst_fpath_b)
+                        self.thumbnails.append(thumb_fpath_b)
+                        img_names_res.append("{} (2)".format(fname))
                         slide_npy_a = np.array(slides[0])
                         slide_npy_b = np.array(slides[1])
+                        thumbnail_a = cv2.resize(slide_npy_a, (0, 0),
+                                              fx=280 / slide_npy_a.shape[1],
+                                              fy=280 / slide_npy_a.shape[0])
+                        thumbnail_b = cv2.resize(slide_npy_b, (0, 0),
+                                              fx=280 / slide_npy_b.shape[1],
+                                              fy=280 / slide_npy_b.shape[0])
+                        #THUMBNAIL img = cv2.resize(img, dsize=(newsize_y, newsize_x),interpolation=cv2.INTER_CUBIC)
                         np.save(dst_fpath_a, slide_npy_a)
                         np.save(dst_fpath_b, slide_npy_b)
+                        np.save(thumb_fpath_a, thumbnail_a)
+                        np.save(thumb_fpath_b, thumbnail_b)
                     else:
                         slide_npy = np.array(slides[0])
+                        thumbnail = cv2.resize(slide_npy, (0, 0),
+                                              fx=280 / slide_npy.shape[1],
+                                              fy=280 / slide_npy.shape[0])
                         np.save(dst_fpath, slide_npy)
+                        np.save(thumb_fpath, thumbnail)
                         self.archives.append(dst_fpath)
+                        self.thumbnails.append(thumb_fpath)
+                        img_names_res.append(fname)
                 elif src_suffix == '.vsi':
                     # These should be converted to png before the code gets here
                     return
-                else:
-                    np.save(dst_fpath, cv2.imread(src_fpath))
+                elif src_suffix == '.czi':
+                    image = czf.imread(src_fpath)
+                    count = image.shape[0] * image.shape[1] * image.shape[2]
+                    for i in range(image.shape[0]):
+                        for j in range(image.shape[1]):
+                            for k in range(image.shape[2]):
+                                # resize_image = cv2.resize(image[i, j, k], dsize=(newsize_y, newsize_x),
+                                #                           interpolation=cv2.INTER_CUBIC)
+                                img_npy = np.array(image[i, j, k])
+                                dst_fpath = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix, len(self.archives)))
+                                thumb_fpath = os.path.join(self.archive_dir, "{}{}_thumbnail.npy".format(username_prefix, len(self.archives)))
+                                thumbnail = cv2.resize(img_npy, (0, 0),
+                                                      fx=280 / img_npy.shape[1],
+                                                      fy=280 / img_npy.shape[0])
+                                np.save(dst_fpath, img_npy)
+                                np.save(thumb_fpath, thumbnail)
+                                self.archives.append(dst_fpath)
+                                self.thumbnails.append(thumb_fpath)
+                                if count > 1:
+                                    img_names_res.append("{} ({})".format(
+                                        fname, i * image.shape[1] * image.shape[2] + j * image.shape[2] + k + 1)
+                                    )
+                                else:
+                                    img_names_res.append(fname)
+                    pass
+                else:  # Primarily png and other images readable by numpy
+                    img_npy = cv2.imread(src_fpath)
+                    thumbnail = cv2.resize(img_npy, (0, 0),
+                                          fx=280 / img_npy.shape[1],
+                                          fy=280 / img_npy.shape[0])
+                    np.save(dst_fpath, img_npy)
+                    np.save(thumb_fpath, thumbnail)
                     self.archives.append(dst_fpath)
+                    self.thumbnails.append(thumb_fpath)
+                    img_names_res.append(fname)
 
             # The root process completes the callback's task while keeping track of progress
             print(len(img_names))
             root = ProgressRoot(
-                # root,
                 len(img_names),
-                "Archiving Image",
+                "Archiving Images",
                 archive_callback
             )
             root.mainloop()
             sys.stdout.flush()
             print("")
+
+            # This collects image resolutions for necessary resizing. This became necessary when
+            # additional image resolutions were being used.
+
+            root = Tk()
+            root.title("Input Image Resolutions")
+            root.withdraw()
+
+            print(self.thumbnails, img_names_res)
+
+            archives_with_pathnames = zip(self.thumbnails, img_names_res)
+
+            ir = ImageResolutions(root, archives_with_pathnames)
+            ir.resizable(False, False)
+            img_resolutions = ir.show()
+            root.destroy()
+
+            def resize_callback(index):
+                i = index
+                dst_fpath = self.archives[i]
+                img = np.load(dst_fpath)
+                newsize_x = int(img.shape[0] / (0.41 / img_resolutions[i][0]))
+                newsize_y = int(img.shape[1] / (0.41 / img_resolutions[i][1]))
+                img = cv2.resize(img, dsize=(newsize_y, newsize_x),
+                           interpolation=cv2.INTER_CUBIC)
+                np.save(dst_fpath, img)
+
+
+            root = ProgressRoot(
+                len(self.archives),
+                "Resizing Images",
+                resize_callback
+            )
+            root.mainloop()
+            sys.stdout.flush()
+            print("")
+
         else:
             # use existing archive files
             for fname in fnames(self.archive_dir):
