@@ -130,6 +130,11 @@ class Images(object):
             def archive_callback(index):
                 i = index
                 src_fpath = img_names[i]
+                if not os.path.exists(src_fpath):
+                    messagebox.showerror(title="Error", message="Error opening {}: {} does not "
+                                         "exist.".format(os.path.basename(src_fpath),
+                                                                                os.path.basename(src_fpath)))
+                    return
                 fname = os.path.basename(src_fpath)
                 sys.stdout.write("\rArchiving Image {}/{}...".format(
                     i + 1,
@@ -140,7 +145,14 @@ class Images(object):
                 thumb_fpath = os.path.join(self.archive_dir, "{}{}_thumbnail.npy".format(username_prefix, len(self.archives)))
                 _, src_suffix = os.path.splitext(src_fpath)
                 if src_suffix in openslide_image_types:
-                    slides = read_openslide_img(src_fpath)
+                    try:
+                        slides = read_openslide_img(src_fpath)
+                    except:
+                        messagebox.showerror(title="Error", message="Error opening {}: {} is not a valid "
+                                                                    "file.".format(os.path.basename(src_fpath),
+                                                                                    os.path.basename(src_fpath)))
+                        return
+
                     if len(slides) == 2:
                         dst_fpath_a = dst_fpath
                         thumb_fpath_a = thumb_fpath
@@ -181,7 +193,13 @@ class Images(object):
                     # These should be converted to png before the code gets here
                     return
                 elif src_suffix == '.czi':
-                    image = czf.imread(src_fpath)
+                    try:
+                        image = czf.imread(src_fpath)
+                    except ValueError:
+                        messagebox.showerror(title="Error", message="Error opening {}: {} "
+                                                                    "is not a valid file.".format(os.path.basename(src_fpath),
+                                                                                    os.path.basename(src_fpath)))
+                        return
                     count = image.shape[0] * image.shape[1] * image.shape[2]
                     for i in range(image.shape[0]):
                         for j in range(image.shape[1]):
@@ -207,6 +225,11 @@ class Images(object):
                     pass
                 else:  # Primarily png and other images readable by numpy
                     img_npy = cv2.imread(src_fpath)
+                    if img_npy is None:
+                        messagebox.showerror(title="Error", message="Error opening {}. {} is not a valid "
+                                                                    "file.".format(os.path.basename(src_fpath),
+                                                                                    os.path.basename(src_fpath)))
+                        return
                     thumbnail = cv2.resize(img_npy, (0, 0),
                                           fx=280 / img_npy.shape[1],
                                           fy=280 / img_npy.shape[0])
@@ -226,6 +249,10 @@ class Images(object):
             root.mainloop()
             sys.stdout.flush()
             print("")
+
+            if len(self.archives) == 0:
+                messagebox.showerror(title="Error", message="No images loaded into archive. L.I.R.A. will not exit.")
+                sys.exit(1)
 
             # delete excess pngs from vsi conversion
             for image_file in vsi_png_images:
