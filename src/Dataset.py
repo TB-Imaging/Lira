@@ -104,10 +104,12 @@ class Dataset(object):
         if self.progress["prediction_grids_finished_editing"]:
 
 
-            outfile_name = tkfilebrowser.asksaveasfilename(defaultext=".csv",
-                                    initialdir=os.path.join(str(Path.home()), 'Documents'),
-                                    initialfile='{}_stats.csv".format(self.uid)'.format(self.uid),
-                                    filetypes=[("CSV file", "*.csv")])
+            outfile_name = tkfilebrowser.asksaveasfilename(
+                title='Save output CSV file',
+                defaultext=".csv",
+                initialdir=os.path.join(str(Path.home()), 'Documents'),
+                initialfile='{}_stats.csv".format(self.uid)'.format(self.uid),
+                filetypes=[("CSV file", "*.csv")])
             # Generate a CSV with raw counts of each classification on each image,
             #   with the percentages each classification takes up of the image,
             #   not including empty slide,
