@@ -108,7 +108,7 @@ class Dataset(object):
                 title='Save output CSV file',
                 defaultext=".csv",
                 initialdir=os.path.join(str(Path.home()), 'Documents'),
-                initialfile='{}_stats.csv".format(self.uid)'.format(self.uid),
+                initialfile='{}_stats.csv'.format(self.uid),
                 filetypes=[("CSV file", "*.csv")])
             # Generate a CSV with raw counts of each classification on each image,
             #   with the percentages each classification takes up of the image,
