@@ -1,7 +1,10 @@
 import sys
+import os
+from pathlib import Path
 import numpy as np
 import cv2
 import tkinter as tk
+import tkfilebrowser
 
 from base import *
 from UserProgress import UserProgress
@@ -100,11 +103,16 @@ class Dataset(object):
         # Once we're sure the user's session is complete:
         if self.progress["prediction_grids_finished_editing"]:
 
+
+            outfile_name = tkfilebrowser.asksaveasfilename(defaultext=".csv",
+                                    initialdir=os.path.join(str(Path.home()), 'Documents'),
+                                    initialfile='{}_stats.csv".format(self.uid)'.format(self.uid),
+                                    filetypes=[("CSV file", "*.csv")])
             # Generate a CSV with raw counts of each classification on each image,
             #   with the percentages each classification takes up of the image,
             #   not including empty slide,
             #   and the number of type one lesions detected on each image.
-            with open("../../Output Stats/{}_stats.csv".format(self.uid), "w") as f:
+            with open(outfile_name, "w") as f:
                 # Write Header line
                 f.write("Image,Healthy Tissue,Type I - Caseum,Type II,Type III,Type I - Rim,Unknown/Misc,\
                         ,Healthy Tissue,Type I - Caseum,Type II,Type III,Type I - Rim,Unknown/Misc,\
