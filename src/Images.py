@@ -2,10 +2,12 @@ import sys
 import cv2
 import numpy as np
 import os
+from pathlib import Path
 import json
 import openslide
 from tkinter import *
 from tkinter import messagebox
+import tkfilebrowser
 from PIL import ImageTk, Image
 import czifile as czf
 from openslide_python_fix import _load_image_lessthan_2_29, _load_image_morethan_2_29
@@ -68,7 +70,7 @@ class Images(object):
     """
 
     def __init__(self, username, restart=False):
-        self.img_dir = "../../Input Images/"  # where image files are stored
+        self.vsi_img_dir = "../../Input Images/"  # where vsi image files are moved to
         self.archive_dir = "../data/images/"  # where we will create and store the .npy archive files
         fname_dir = "../data/filenames/"
         self.archives = []  # where we will store list of full filepaths for each archive in our archive_dir
@@ -87,29 +89,53 @@ class Images(object):
                           f.split(os.sep)[-1].startswith(username_prefix) and
                           f.split(os.sep)[-1][len(username_prefix):-4].isnumeric()
             )
-            img_names = [name for name in fnames(self.img_dir, recursive=False)]
+            openslide_image_types = {".svs", ".tif", ".vms", ".vmu", ".ndpi", ".scn",
+                                ".mrxs", ".tiff", ".svslide"}
+            root = Tk()
+            root.title("")
+            selection_filetypes = [
+                ('Microscopy Images (svs, vsi, czi, png, etc...)',
+                 '*.svs|*.tif|*.tiff|*.vms|*.vmu|*.ndpi|*.scn|*.mrxs|*.tiff|*.svslide|*.vsi|*.czi|*.png|*.jpg|'
+                 '*.jpeg|*.gif'),
+            ]
+
+            img_names = list(tkfilebrowser.askopenfilenames(
+                parent=root,
+                title='Select Images to Scan',
+                filetypes=selection_filetypes,
+                initialdir=os.path.join(str(Path.home()), 'Pictures')
+            ))
+            root.destroy()
+
             # Name of every image after large images have been split into two
             # or three constituent images
             img_names_all = []
-            for name in img_names:
+            vsi_images = []
+            vsi_png_images = []
+            for i, name in enumerate(img_names):
                 if name.endswith(".vsi"):
-                    convert_vsi(".png")
-                    img_names = [name for name in fnames(self.img_dir, recursive=False)]
-                    break
-            openslide_image_types = {".svs", ".tif", ".vms", ".vmu", ".ndpi", ".scn",
-                                ".mrxs", ".tiff", ".svslide"}
+                    vsi_images.append((name, path.join(self.vsi_img_dir, os.path.basename(name))))
+                    img_names[i] = path.join(self.vsi_img_dir, os.path.basename(name)[:-3] + 'png')
+                    vsi_png_images.append(img_names[i])
+            for original_path, new_path in vsi_images:  # Move vsi files to the vsi image directory
+                os.rename(original_path, new_path)
+            if len(vsi_images) > 1:
+                convert_vsi(".png")
+                for original_path, current_path in vsi_images:  # Move vsi files back to their original directories
+                    os.rename(current_path, original_path)
+                # img_names = [name for name in fnames(self.vsi_img_dir, recursive=False)]
 
             # Define a callback to be passed to the Asynchronous Progress Bar
 
             def archive_callback(index):
                 i = index
-                fname = img_names[i]
+                src_fpath = img_names[i]
+                fname = os.path.basename(src_fpath)
                 sys.stdout.write("\rArchiving Image {}/{}...".format(
                     i + 1,
                     len(img_names))
                 )
                 # Read src, Check max shape, Create archive at dst, add dst to archive list
-                src_fpath = os.path.join(self.img_dir, fname)
                 dst_fpath = os.path.join(self.archive_dir, "{}{}.npy".format(username_prefix, len(self.archives)))
                 thumb_fpath = os.path.join(self.archive_dir, "{}{}_thumbnail.npy".format(username_prefix, len(self.archives)))
                 _, src_suffix = os.path.splitext(src_fpath)
@@ -200,6 +226,10 @@ class Images(object):
             root.mainloop()
             sys.stdout.flush()
             print("")
+
+            # delete excess pngs from vsi conversion
+            for image_file in vsi_png_images:
+                os.remove(image_file)
 
             # This collects image resolutions for necessary resizing. This became necessary when
             # additional image resolutions were being used.
