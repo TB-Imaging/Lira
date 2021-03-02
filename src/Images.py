@@ -114,15 +114,41 @@ class Images(object):
             vsi_png_images = []
             for i, name in enumerate(img_names):
                 if name.endswith(".vsi"):
-                    vsi_images.append((name, os.path.join(self.vsi_img_dir, os.path.basename(name))))
+                    folderbase = "_{}_".format('.'.join(os.path.basename(name).split('.')[:-1]))
+                    folder_fullname = os.path.join(os.path.dirname(name), folderbase)
+                    print(folder_fullname)
+                    folder_newpath = os.path.join(self.vsi_img_dir, folderbase)
+                    if not os.path.exists(folder_fullname):
+                        messagebox.showerror(title="File Not Found", message="No accompanying folder found for {"
+                                                                             "}. .vsi files require an "
+                                                                             "accompanying folder to display "
+                                                                             "the full image.".format(
+                            os.path.basename(name)))
+                        folder_fullname = None
+                        folder_newpath = None
+                    vsi_images.append((
+                        name,
+                        os.path.join(self.vsi_img_dir, os.path.basename(name)),
+                        folder_fullname,
+                        folder_newpath
+                    ))
                     img_names[i] = os.path.join(self.vsi_img_dir, os.path.basename(name)[:-3] + 'png')
                     vsi_png_images.append(img_names[i])
-            for original_path, new_path in vsi_images:  # Move vsi files to the vsi image directory
+            for original_path, new_path, original_folderpath, new_folderpath in vsi_images:  # Move vsi files to the
+                # vsi image
+                # directory
                 os.rename(original_path, new_path)
+                if original_folderpath is not None:
+                    os.rename(original_folderpath, new_folderpath)
             if len(vsi_images) > 0:
                 convert_vsi(".png")
-                for original_path, current_path in vsi_images:  # Move vsi files back to their original directories
+                for original_path, current_path, original_folderpath, current_folderpath in vsi_images:  # Move vsi
+                    # files
+                    # back to their
+                    # original directories
                     os.rename(current_path, original_path)
+                    if original_folderpath is not None:
+                        os.rename(current_folderpath, original_folderpath)
                 # img_names = [name for name in fnames(self.vsi_img_dir, recursive=False)]
 
             # Define a callback to be passed to the Asynchronous Progress Bar
