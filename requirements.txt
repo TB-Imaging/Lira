@@ -2,7 +2,7 @@ absl-py==0.12.0
 altgraph==0.16.1
 astunparse==1.6.3
 Babel==2.9.0
-bleach==1.5.0
+bleach==3.3.0
 cachetools==4.2.1
 certifi==2020.12.5
 chardet==4.0.0
