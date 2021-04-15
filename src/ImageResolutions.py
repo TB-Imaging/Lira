@@ -76,7 +76,7 @@ class ImageResolutions(tk.Toplevel):
 
         finishButton = tk.Button(self, text="Finish", command=self.finish)
         finishButton.grid(row=6, column=2, sticky=tk.E, pady=5, padx=10)
-        center_left_window(self, 340, 493)
+        # center_left_window(self, 340, 493)
 
     def loadImage(self):
 

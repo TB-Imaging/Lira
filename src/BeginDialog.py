@@ -59,7 +59,7 @@ class BeginDialog(tk.Toplevel):
         cancelButton = tk.Button(self, text="Cancel", command=self.cancel)
         beginButton.grid(row=4, column=2, sticky=tk.E, pady=5, padx=5)
         cancelButton.grid(row=4, column=0, sticky=tk.W, padx=5)
-        center_left_window(self, 274, 168)
+        # center_left_window(self, 274, 168)
 
     def restart(self):
         if self.var_restart.get():

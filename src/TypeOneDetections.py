@@ -4,10 +4,13 @@ import numpy as np
 from keras.models import load_model
 
 from base import *
+from gui_base import get_outline_rectangle_coordinates
 from EditingDataset import EditingDataset
 from TypeOneDetectionEditor import TypeOneDetectionEditor
 from ProgressBar import ProgressRoot
 
+from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize_image
+from keras_retinanet import models
 
 class TypeOneDetections(object):
     def __init__(self, dataset, uid, restart=False):
@@ -25,6 +28,8 @@ class TypeOneDetections(object):
                                              restart=self.restart)
         self.after_editing = EditingDataset(self.dataset, self.uid, self.archive_dir_after_editing,
                                             restart=self.restart)
+
+        self.model = None
 
         # Detection parameters and classifier
         self.detection = True
@@ -54,12 +59,20 @@ class TypeOneDetections(object):
 
         # Kernel for our Gaussian Blur
         self.gaussian_kernel = (7, 7)
+        self.rect_h = 64  # Height of each rectangle when displayed
+        self.rect_w = 64  # Width of each rectangle when displayed
 
     def generate(self):
         # Generates detections for each image, saving each detection array to self.before_editing.
 
         # Quick lambda for use later
         dist = lambda a, b: abs(a - b)
+
+        if self.detection:
+            self.model = models.load_model('../classifiers/type_one_detection_classifier_resnet50.h5',
+                                           backbone_name='resnet50')
+            self.model = models.convert_model(self.model)
+
 
         # Generate for each image
         def generate_callback(index):  # img_i, img in enumerate(self.imgs):
@@ -72,6 +85,20 @@ class TypeOneDetections(object):
             detections = []
 
             if self.detection:
+                imscan = cv2.resize(img, (0, 0), fx=0.025, fy=0.025)
+                imscan = cv2.cvtColor(imscan, cv2.COLOR_RGB2BGR)
+                imscan = preprocess_image(imscan.copy())
+                imscan, scale = resize_image(imscan)
+
+                boxes, scores, labels = self.model.predict(np.expand_dims(imscan, axis=0))
+                boxes /= scale
+                boxes /= 0.025
+                for box, score, label in zip(boxes[0], scores[0], labels[0]):
+                    if score < 0.4: continue
+                    box = get_outline_rectangle_coordinates(box[0], box[1], box[2], box[3], self.rect_h, self.rect_w)
+                    detections.append(box)
+
+
                 pass
                 # Get only the green channel and apply our gaussian blur to it
                 # img = cv2.GaussianBlur(img[:, :, 1], self.gaussian_kernel, 0)

@@ -33,7 +33,7 @@ def get_lung_contours(img):
     mask = cv2.erode(mask, None, iterations=7)
     mask = cv2.dilate(mask, None, iterations=7)
 
-    im2, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contourlist = [(c / scale).astype(np.float32) for c in contours if cv2.contourArea(c) > 1000]
     return contourlist
 

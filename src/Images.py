@@ -8,7 +8,10 @@ import openslide
 from tkinter import *
 from tkinter import messagebox
 import tkfilebrowser
+import PIL
+from keras_retinanet.utils.image import read_image_bgr
 from PIL import ImageTk, Image
+PIL.Image.MAX_IMAGE_PIXELS = 2000000000
 import czifile as czf
 from openslide_python_fix import _load_image_lessthan_2_29, _load_image_morethan_2_29
 
@@ -250,7 +253,14 @@ class Images(object):
                                     img_names_all.append(fname)
                     pass
                 else:  # Primarily png and other images readable by numpy
-                    img_npy = cv2.imread(src_fpath)
+                    try:
+                        # img_npy = cv2.imread(src_fpath)
+                        img_npy = read_image_bgr(src_fpath)
+                    except cv2.error as e:
+                        messagebox.showerror(title="Error", message="Error opening {}. {}"
+                                                                    "file.".format(os.path.basename(src_fpath),
+                                                                                    e))
+
                     if img_npy is None:
                         messagebox.showerror(title="Error", message="Error opening {}. {} is not a valid "
                                                                     "file.".format(os.path.basename(src_fpath),
@@ -277,7 +287,7 @@ class Images(object):
             print("")
 
             if len(self.archives) == 0:
-                messagebox.showerror(title="Error", message="No images loaded into archive. L.I.R.A. will not exit.")
+                messagebox.showerror(title="Error", message="No images loaded into archive. L.I.R.A. will now exit.")
                 sys.exit(1)
 
             # delete excess pngs from vsi conversion
