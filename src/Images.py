@@ -297,21 +297,21 @@ class Images(object):
             # This collects image resolutions for necessary resizing. This became necessary when
             # additional image resolutions were being used.
 
-            root = Tk()
-            root.title("Input Image Resolutions")
-            root.withdraw()
+            # root = Tk()
+            # root.title("Input Image Resolutions")
+            # root.withdraw()
 
             # save img names to use in stat output
             self.fnames = img_names_all
             with open(os.path.join(fname_dir, '{}_fnames.json'.format(username)), 'w') as f:
                 json.dump(self.fnames, f)
 
-            archives_with_pathnames = zip(self.thumbnails, img_names_all)
-
-            ir = ImageResolutions(root, archives_with_pathnames)
-            ir.resizable(False, False)
-            img_resolutions = ir.show()
-            root.destroy()
+            archives_with_pathnames = list(zip(self.thumbnails, img_names_all))
+            img_resolutions = [[0.41, 0.41] for i in archives_with_pathnames]
+            ir = ImageResolutions(archives_with_pathnames, img_resolutions)
+            # ir.resizable(False, False)
+            # img_resolutions = ir.show()
+            # root.destroy()
 
             def resize_callback(index):
                 i = index

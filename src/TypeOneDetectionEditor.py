@@ -62,16 +62,19 @@ class TypeOneDetectionEditor(object):
         vbar.config(command=self.canvas.yview)
 
         buttonFrame = Frame(self.window, bd=5)
-        finishButton = Button(buttonFrame, text="Continue", command=self.finish_button_press)
+        self.finishButton = Button(buttonFrame, text="Continue", command=self.finish_button_press, state=DISABLED)
+        if self.dataset.progress["type_ones_image"] == len(self.dataset.imgs) - 1:
+            self.finishButton.config(state=NORMAL)
         quitButton = Button(buttonFrame, text="Quit", command=q_key_press)
 
         leftrightFrame = Frame(buttonFrame)
         self.leftButton = Button(leftrightFrame, text="◀", command=self.left_arrow_key_press)
         self.rightButton = Button(leftrightFrame, text="▶", command=self.right_arrow_key_press)
-
-        buttonFrame.grid(row=1, column=0, sticky=W+E)
+        tipLabel = Label(self.window, text="Click and drag left mouse to add Type One detection. Click and drag right "
+                                       "mouse to remove Type One detection.").grid(row=1, column=0, sticky=W+E)
+        buttonFrame.grid(row=2, column=0, sticky=W+E)
         quitButton.pack(side=LEFT)
-        finishButton.pack(side=RIGHT)
+        self.finishButton.pack(side=RIGHT)
         leftrightFrame.pack()
         # begin with the leftButton hidden, and only show the rightButton if there are multiple
         # images
@@ -268,6 +271,8 @@ class TypeOneDetectionEditor(object):
                 self.rightButton.pack_forget()
             if self.dataset.progress["type_ones_image"] == 1:
                 self.leftButton.pack(side=LEFT)
+            if self.dataset.progress["type_ones_image"] == len(self.dataset.imgs) - 1:
+                self.finishButton.config(state=NORMAL)
             self.update_img()
 
     def finish_button_press(self, event=None):
@@ -286,8 +291,6 @@ class TypeOneDetectionEditor(object):
         c = event.char.upper()
         if c == "Q":
             q_key_press(event)
-        # elif c == "N":
-        #     self.n_key_press(event)
 
     # The following functions are helper functions specific to this editor. All other GUI helpers are in the
     # gui_base.py file.

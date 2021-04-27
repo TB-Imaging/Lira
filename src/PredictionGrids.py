@@ -185,6 +185,10 @@ class PredictionGrids(object):
                 prediction_grid[type_one_subsection_batch_indices, 5] = type_one_predictions[:, 3]
 
             for non_type_one_subsection_i in range(0, len(non_type_one_subsection_indices), self.mb_n):
+                if not non_type_one_subsection_indices[0]:
+                    # it shouldn't be doing this if there's nothing here
+                    break
+
                 percent = ((non_type_one_subsection_i + len(type_one_subsection_indices) - 1) /
                            (len(non_type_one_subsection_indices) + len(type_one_subsection_indices))) * 100.0
                 sys.stdout.write(
@@ -197,7 +201,6 @@ class PredictionGrids(object):
                 progress.setProgressTwoPercent(percent)
                 progress.step()
                 progress.update()
-
                 # Get batch indices
                 non_type_one_subsection_batch_indices = non_type_one_subsection_indices[
                                                         non_type_one_subsection_i:non_type_one_subsection_i + self.mb_n]

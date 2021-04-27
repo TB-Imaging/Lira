@@ -75,7 +75,7 @@ class TypeOneDetections(object):
 
 
         # Generate for each image
-        def generate_callback(index):  # img_i, img in enumerate(self.imgs):
+        def generate_callback(index):
             img_i = index
             img = self.imgs[img_i]
             # Progress indicator
@@ -95,7 +95,9 @@ class TypeOneDetections(object):
                 boxes /= 0.025
                 for box, score, label in zip(boxes[0], scores[0], labels[0]):
                     if score < 0.4: continue
-                    box = get_outline_rectangle_coordinates(box[0], box[1], box[2], box[3], self.rect_h, self.rect_w)
+                    box = get_outline_rectangle_coordinates(box[0], box[1], box[2], box[3], self.rect_h*10,
+                                                            self.rect_w*10)
+                    print("box:", box)
                     detections.append(box)
 
             # Save these detections to both the before and after editing datasets, since we initialize them to be the

@@ -23,19 +23,22 @@ class Dataset(object):
         # Get uid if needed
 
         if dialog:
-            root = tk.Tk()
-            root.title("L.I.R.A.")
-            root.withdraw()
+            # root = tk.Tk()
+            # root.title("L.I.R.A.")
+            # root.withdraw()
+            begin_options = {}
+            bd = BeginDialog(begin_options)
 
-            bd = BeginDialog(root)
-            bd.resizable(False, False)
-            uid, restart, model = bd.show()
-            root.destroy()
+            if "uid" in begin_options and \
+                "restart" in begin_options and \
+                "model" in begin_options:
 
-            if uid != "":
-                self.uid = uid
-                self.restart = restart
-                self.model = model
+                uid = begin_options["uid"]
+                restart = begin_options["restart"]
+                self.model = begin_options["model"]
+
+                print(uid, restart, self.model)
+
             else:
                 sys.exit("Exiting...")
 

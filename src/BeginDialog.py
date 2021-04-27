@@ -20,11 +20,13 @@ def inputFolderLoaded():
     return len([fname for fname in fnames(img_dir)]) > 0
 
 
-class BeginDialog(tk.Toplevel):
+class BeginDialog(tk.Tk):  # tk.Toplevel):
 
-    def __init__(self, parent):
-        tk.Toplevel.__init__(self, parent)
-        self.title = "Title"
+    def __init__(self, begin_options):
+        # tk.Toplevel.__init__(self, parent)
+        tk.Tk.__init__(self)
+        self.begin_options = begin_options
+        self.title = "L.I.R.A."
         self.users = ['-'] + list(sorted(get_user_list(), key=lambda s: s.lower()))
         self.userSet = set(self.users[1:])
         self.var_user = tk.StringVar()
@@ -60,6 +62,8 @@ class BeginDialog(tk.Toplevel):
         beginButton.grid(row=4, column=2, sticky=tk.E, pady=5, padx=5)
         cancelButton.grid(row=4, column=0, sticky=tk.W, padx=5)
         # center_left_window(self, 274, 168)
+
+        self.mainloop()
 
     def restart(self):
         if self.var_restart.get():
@@ -110,9 +114,12 @@ class BeginDialog(tk.Toplevel):
         elif not inputFolderLoaded() and (self.var_restart.get() or self.var_uid.get() not in self.userSet):
             messagebox.showwarning("Empty Input", "No files in the input directory!")
         else:
-            self.return_uid = self.var_uid.get()
-            self.return_restart = self.var_restart.get()
-            self.return_model = self.var_model.get()
+            self.begin_options["uid"] = self.var_uid.get()
+            self.begin_options["restart"] = self.var_restart.get()
+            self.begin_options["model"] = self.var_model.get()
+            # self.return_uid = self.var_uid.get()
+            # self.return_restart = self.var_restart.get()
+            # self.return_model = self.var_model.get()
             self.destroy()
 
     def setUser(self, _):
@@ -149,11 +156,11 @@ class BeginDialog(tk.Toplevel):
         self.userMenu = tk.OptionMenu(self, self.var_user, *self.users, command=self.setUser)
         self.userMenu.grid(row=0, column=1, columnspan=3, sticky=tk.W, padx=10, pady=5)
 
-    def show(self):
-        self.wm_deiconify()
-        self.uid.focus_force()
-        self.wait_window()
-        return self.return_uid, self.return_restart, self.return_model
+    # def show(self):
+    #     self.wm_deiconify()
+    #     self.uid.focus_force()
+    #     self.wait_window()
+    #     return self.return_uid, self.return_restart, self.return_model
 
     def cancel(self):
         self.destroy()

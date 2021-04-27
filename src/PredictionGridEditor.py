@@ -30,9 +30,9 @@ class PredictionGridEditor(object):
 
         self.tools = ["pencil", "draw-square", "paint-bucket", "zoom"]
         self.tool_cursors = ["pencil", "crosshair", "coffee_mug", "target"]
-        self.tool_icons = ["pencil-alt-solid.png", "edit-solid.png", "fill-drip-solid.png", "search-plus-solid.png"]
+        self.tool_icons = ["paint-brush-solid.png", "edit-solid.png", "fill-drip-solid.png", "search-plus-solid.png"]
         tool_tips = ["Pencil tool", "Color selected rectangle", "Fill tool", "Zoom in on selected area"]
-        self.tool_index = -1
+        self.tool_index = 1
         base_dir = os.path.dirname(os.getcwd())
         icon_dir = os.path.join(base_dir, 'icons')
         # Img + Predictions
@@ -69,7 +69,9 @@ class PredictionGridEditor(object):
         vbar.config(command=self.main_canvas.yview)
         self.main_canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
         buttonFrame = Frame(self.window, bd=5)
-        finishButton = Button(buttonFrame, text="Continue", command=self.finish_button_press)
+        self.finishButton = Button(buttonFrame, text="Continue", command=self.finish_button_press, state=DISABLED)
+        if self.dataset.progress["prediction_grids_image"] == len(self.dataset.imgs) - 1:
+            self.finishButton.config(state=NORMAL)
         quitButton = Button(buttonFrame, text="Quit", command=self.q_key_press)
 
         leftrightFrame = Frame(buttonFrame)
@@ -79,7 +81,7 @@ class PredictionGridEditor(object):
 
         buttonFrame.grid(row=1, column=0, sticky=W + E)
         quitButton.pack(side=LEFT)
-        finishButton.pack(side=RIGHT)
+        self.finishButton.pack(side=RIGHT)
         leftrightFrame.pack()
         # begin with the leftButton hidden, and only show the rightButton if there are multiple
         # images
@@ -156,7 +158,7 @@ class PredictionGridEditor(object):
                 Button(self.toolbar, relief=FLAT, command=tool_cmd, bg=icon_color_str, image=self.iconImages[i])
             )
             if i == self.tool_index:
-                self.toolButtons[i].config(relief=SUNKEN, state=DISABLED)
+                self.changeTool(i)
             self.toolButtons[i].pack()
             createTooltip(self.toolButtons[i], tool_tips[i])
 
@@ -649,6 +651,7 @@ class PredictionGridEditor(object):
             self.dataset.progress["prediction_grids_image"] += 1
             if self.dataset.progress["prediction_grids_image"] == len(self.dataset.imgs) - 1:
                 self.rightButton.pack_forget()
+                self.finishButton.config(state=NORMAL)
             if self.dataset.progress["prediction_grids_image"] == 1:
                 self.leftButton.pack(side=LEFT)
             self.update_img()
@@ -746,7 +749,6 @@ class PredictionGridEditor(object):
         # We compute the fx and fy img resize factors according to sub_h and sub_w to make them aligned.
         self.fy = (self.prediction_grid.shape[0] * self.sub_h) / self.img.shape[0]
         self.fx = (self.prediction_grid.shape[1] * self.sub_w) / self.img.shape[1]
-
         self.img = cv2.resize(self.img, (0, 0), fx=self.fx, fy=self.fy)  # Resize img
         self.resized_img = self.img  # Save this so we don't have to resize later
 

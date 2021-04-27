@@ -9,14 +9,15 @@ from PIL import ImageTk, Image
 from base import *
 from tktools import center_left_window
 
-class ImageResolutions(tk.Toplevel):
+class ImageResolutions(tk.Tk):
 
-    def __init__(self, parent, images_pathnames):
-        tk.Toplevel.__init__(self, parent)
+    def __init__(self, images_pathnames, img_resolutions):
+        tk.Tk.__init__(self)
         self.finished = False
+        self.protocol("WM_DELETE_WINDOW", self.quit)
         self.images_pathnames = list(images_pathnames)
 
-        self.resolutions = [[0.41, 0.41] for i in self.images_pathnames]
+        self.resolutions = img_resolutions
 
         self.title = "Image Resolutions"
         self.index = 0
@@ -74,9 +75,13 @@ class ImageResolutions(tk.Toplevel):
         self.fileName = tk.Label(self, text=self.images_pathnames[self.index][1])
         self.fileName.grid(row=4, column=0, columnspan=3, sticky=tk.E+tk.W)
 
-        finishButton = tk.Button(self, text="Finish", command=self.finish)
-        finishButton.grid(row=6, column=2, sticky=tk.E, pady=5, padx=10)
+        self.finishButton = tk.Button(self, text="Finish", command=self.finish, state=tk.DISABLED)
+        if self.index == len(self.images_pathnames) - 1:
+            self.finishButton.config(state=tk.NORMAL)
+        self.finishButton.grid(row=6, column=2, sticky=tk.E, pady=5, padx=10)
         # center_left_window(self, 340, 493)
+        self.mainloop()
+
 
     def loadImage(self):
 
@@ -119,6 +124,8 @@ class ImageResolutions(tk.Toplevel):
         if self.index < len(self.images_pathnames) - 1: self.index += 1
         if self.index == len(self.images_pathnames) - 1:
             self.nextButton.config(state=tk.DISABLED)
+        if self.index == len(self.images_pathnames) - 1:
+            self.finishButton.config(state=tk.NORMAL)
         self.lastButton.config(state=tk.NORMAL)
         self.var_resX.set(self.resolutions[self.index][0])
         self.var_resY.set(self.resolutions[self.index][1])
@@ -145,12 +152,15 @@ class ImageResolutions(tk.Toplevel):
         self.finished = True
         self.destroy()
 
-    def show(self):
-        self.wm_deiconify()
-        self.wait_window()
-        if not self.finished:
-            sys.exit('Exiting...')
-        return self.resolutions
+    # def show(self):
+    #     self.wm_deiconify()
+    #     self.wait_window()
+    #     if not self.finished:
+    #         sys.exit('Exiting...')
+    #     return self.resolutions
+
+    def quit(self):
+        sys.exit('Exiting...')
 
     def cancel(self):
-        self.destroy()
+        sys.exit('Exiting...')
