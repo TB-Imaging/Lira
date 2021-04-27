@@ -28,10 +28,10 @@ class PredictionGridEditor(object):
         self.color_index = 3
         self.title = "L.I.R.A. Prediction Grid Editing"
 
-        self.tools = ["pencil", "draw-square", "paint-bucket", "zoom"]
-        self.tool_cursors = ["pencil", "crosshair", "coffee_mug", "target"]
+        self.tools = ["paintbrush", "draw-square", "paint-bucket", "zoom"]
+        self.tool_cursors = ["spraycan", "crosshair", "coffee_mug", "target"]
         self.tool_icons = ["paint-brush-solid.png", "edit-solid.png", "fill-drip-solid.png", "search-plus-solid.png"]
-        tool_tips = ["Pencil tool", "Color selected rectangle", "Fill tool", "Zoom in on selected area"]
+        tool_tips = ["Paintbrush tool", "Color selected rectangle", "Fill tool", "Zoom in on selected area"]
         self.tool_index = 1
         base_dir = os.path.dirname(os.getcwd())
         icon_dir = os.path.join(base_dir, 'icons')
@@ -115,6 +115,16 @@ class PredictionGridEditor(object):
         self.buttonFrame = Frame(self.frame)
 
         self.buttonFrame.pack(side=LEFT)
+
+        self.paintbrush_radius = 3
+
+        def set_paintbrush_radius(val):
+            self.paintbrush_radius = int(val) - 1
+
+        self.scaleFrame = Frame(self.frame)
+        self.scaleLabel = Label(self.scaleFrame, text="Paintbrush Radius")
+        self.scale = Scale(self.scaleFrame, from_=1, to=6, orient=HORIZONTAL, command=set_paintbrush_radius)
+        self.scale.set(3)
 
         self.undo_img = Image.open(os.path.join(icon_dir, "undo-solid.png"))
         self.undo_img = self.undo_img.resize((20, 20), Image.ANTIALIAS)
@@ -288,10 +298,16 @@ class PredictionGridEditor(object):
         self.tool_index = index
         self.main_canvas.config(cursor=self.tool_cursors[index])
         # "pencil", "draw-square", "paint-bucket", "zoom"
-        if self.tools[index] == "pencil":
-            self.main_canvas.bind("<Button 1>", self.pencil_click)  # mouse_click
-            self.main_canvas.bind("<B1-Motion>", self.pencil_move)  # mouse_move
+        self.scaleFrame.pack_forget()
+        if self.tools[index] == "paintbrush":
+            self.main_canvas.bind("<Button 1>", self.paintbrush_click)  # mouse_click
+            self.main_canvas.bind("<B1-Motion>", self.paintbrush_move)  # mouse_move
             self.main_canvas.unbind("<ButtonRelease-1>")
+
+            self.scaleFrame.pack(side=LEFT, padx=10)#side=TOP)
+            self.scaleLabel.pack(side=TOP)
+            self.scale.pack(side=BOTTOM)
+
         elif self.tools[index] == "draw-square":
             self.main_canvas.bind("<Button 1>", self.draw_square_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.draw_square_move)  # mouse_move
@@ -306,11 +322,11 @@ class PredictionGridEditor(object):
             self.main_canvas.bind("<ButtonRelease-1>", self.zoom_release)  # mouse_left_release
 
     # The following functions are event handlers for our editing window.
-    def pencil_click(self, event):
+    def paintbrush_click(self, event):
         self.add_undo()
-        self.pencil_move(event)
+        self.paintbrush_move(event)
 
-    def pencil_move(self, event):
+    def paintbrush_move(self, event):
 
         self.selection_x1, self.selection_y1 = get_canvas_coordinates(
             event)  # Get rectangle coordinates from our initial mouse click point to this point
@@ -328,10 +344,10 @@ class PredictionGridEditor(object):
             self.sub_h,
             self.sub_w
         )
-        self.prediction_rect_x1 = int(outline_rect_x1 / self.sub_w)
-        self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h)
-        self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w)
-        self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h)
+        self.prediction_rect_x1 = int(outline_rect_x1 / self.sub_w) - self.paintbrush_radius
+        self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h) - self.paintbrush_radius
+        self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w) + self.paintbrush_radius
+        self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h) + self.paintbrush_radius
 
         self.fill_selected_area()
 
