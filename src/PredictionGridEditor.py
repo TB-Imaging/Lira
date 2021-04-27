@@ -302,6 +302,8 @@ class PredictionGridEditor(object):
         if self.tools[index] == "paintbrush":
             self.main_canvas.bind("<Button 1>", self.paintbrush_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.paintbrush_move)  # mouse_move
+            self.main_canvas.bind("<Motion>", self.paintbrush_move_outline)  # mouse_move
+            self.main_canvas.bind("<Leave>", self.paintbrush_leave)  # mouse_move
             self.main_canvas.unbind("<ButtonRelease-1>")
 
             self.scaleFrame.pack(side=LEFT, padx=10)#side=TOP)
@@ -348,8 +350,36 @@ class PredictionGridEditor(object):
         self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h) - self.paintbrush_radius
         self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w) + self.paintbrush_radius
         self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h) + self.paintbrush_radius
-
+        self.paintbrush_move_outline(event)
         self.fill_selected_area()
+
+    def paintbrush_move_outline(self, event):
+
+        self.selection_x1, self.selection_y1 = get_canvas_coordinates(
+            event)  # Get rectangle coordinates from our initial mouse click point to this point
+        rect_x1, rect_y1, rect_x2, rect_y2 = get_rectangle_coordinates(
+            self.selection_x1, self.selection_y1,
+            self.selection_x1, self.selection_y1
+        )
+
+        # Get coordinates for a new rectangle outline with this new rectangle
+        outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2 = get_outline_rectangle_coordinates(
+            rect_x1 - self.paintbrush_radius * self.sub_w,
+            rect_y1 - self.paintbrush_radius * self.sub_h,
+            rect_x2 + self.paintbrush_radius * self.sub_w,
+            rect_y2 + self.paintbrush_radius * self.sub_h,
+            self.sub_h,
+            self.sub_w
+        )
+
+        # Delete old selection rectangle and draw new one with this new rectangle outline
+        # Left Mouse Move
+        self.main_canvas.delete("paintbrush_outline")
+        self.main_canvas.create_rectangle(outline_rect_x1, outline_rect_y1, outline_rect_x2, outline_rect_y2,
+                                          fill='', outline="darkRed", width=2, tags="paintbrush_outline")
+
+    def paintbrush_leave(self, event):
+        self.main_canvas.delete("paintbrush_outline")
 
     def draw_square_click(self, event):
         # Start a selection rect.
