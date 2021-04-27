@@ -20,7 +20,7 @@ def inputFolderLoaded():
     return len([fname for fname in fnames(img_dir)]) > 0
 
 
-class BeginDialog(tk.Tk):  # tk.Toplevel):
+class BeginDialog(tk.Tk):
 
     def __init__(self, begin_options):
         # tk.Toplevel.__init__(self, parent)

@@ -299,25 +299,24 @@ class PredictionGridEditor(object):
         self.main_canvas.config(cursor=self.tool_cursors[index])
         # "pencil", "draw-square", "paint-bucket", "zoom"
         self.scaleFrame.pack_forget()
+        self.main_canvas.unbind("<Motion>")
+        self.main_canvas.unbind("<Leave>")
+        self.main_canvas.unbind("<ButtonRelease-1>")
+        self.main_canvas.unbind("<B1-Motion>")
         if self.tools[index] == "paintbrush":
             self.main_canvas.bind("<Button 1>", self.paintbrush_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.paintbrush_move)  # mouse_move
             self.main_canvas.bind("<Motion>", self.paintbrush_move_outline)  # mouse_move
             self.main_canvas.bind("<Leave>", self.paintbrush_leave)  # mouse_move
-            self.main_canvas.unbind("<ButtonRelease-1>")
-
-            self.scaleFrame.pack(side=LEFT, padx=10)#side=TOP)
+            self.scaleFrame.pack(side=LEFT, padx=10)
             self.scaleLabel.pack(side=TOP)
             self.scale.pack(side=BOTTOM)
-
         elif self.tools[index] == "draw-square":
             self.main_canvas.bind("<Button 1>", self.draw_square_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.draw_square_move)  # mouse_move
             self.main_canvas.bind("<ButtonRelease-1>", self.draw_square_release)  # mouse_left_release
         elif self.tools[index] == "paint-bucket":
             self.main_canvas.bind("<Button 1>", self.paint_bucket_click)  # mouse_click
-            self.main_canvas.unbind("<B1-Motion>")
-            self.main_canvas.unbind("<ButtonRelease-1>")
         elif self.tools[index] == "zoom":
             self.main_canvas.bind("<Button 1>", self.zoom_click)  # mouse_click
             self.main_canvas.bind("<B1-Motion>", self.zoom_move)  # mouse_move
@@ -347,7 +346,9 @@ class PredictionGridEditor(object):
             self.sub_w
         )
         self.prediction_rect_x1 = int(outline_rect_x1 / self.sub_w) - self.paintbrush_radius
+        if self.prediction_rect_x1 < 0: self.prediction_rect_x1 = 0
         self.prediction_rect_y1 = int(outline_rect_y1 / self.sub_h) - self.paintbrush_radius
+        if self.prediction_rect_y1 < 0: self.prediction_rect_y1 = 0
         self.prediction_rect_x2 = int(outline_rect_x2 / self.sub_w) + self.paintbrush_radius
         self.prediction_rect_y2 = int(outline_rect_y2 / self.sub_h) + self.paintbrush_radius
         self.paintbrush_move_outline(event)
