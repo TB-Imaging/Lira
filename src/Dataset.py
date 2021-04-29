@@ -124,6 +124,8 @@ class Dataset(object):
                         ,Number of Type One Lesions\n")
 
                 # Iterate through predictions and detections
+
+                prediction_sums = []
                 for i, (prediction_grid, detections) in enumerate(
                         zip(self.prediction_grids.after_editing, self.type_one_detections.after_editing)):
                     sys.stdout.write("\rGenerating Stats on Image {}/{}...".format(i, len(self.imgs) - 1))
@@ -135,7 +137,11 @@ class Dataset(object):
                         if classification != 3:
                             prediction_counts[classification_i] = np.sum(prediction_grid == classification)
                             classification_i += 1
-
+                    if i == 0:
+                        prediction_sums = prediction_counts
+                    else:
+                        for j, count in enumerate(prediction_counts):
+                            prediction_sums[j] += count
                     # Get total number of classifications for this image
                     prediction_n = np.sum(prediction_counts)
 
@@ -146,8 +152,19 @@ class Dataset(object):
                     detection_count = len(get_rect_clusters(detections))
 
                     # Write
+                    print(self.imgs.fnames, i)
                     f.write("{},{},,{},,{}\n".format(self.imgs.fnames[i], ",".join(map(str, list(prediction_counts))),
                                                      ",".join(map(str, list(prediction_avgs))), detection_count))
+
+
+                detection_total = sum([len(get_rect_clusters(d)) for d in self.type_one_detections.after_editing])
+
+                total = sum(prediction_sums)
+                sum_average = [p / total for p in prediction_sums]
+
+                f.write("\nsummary,{},,{},,{}\n".format(",".join(map(str, list(prediction_sums))),
+                                                        ",".join(map(str, list(sum_average))),
+                                                        detection_total))
 
                 sys.stdout.flush()
                 print("")
