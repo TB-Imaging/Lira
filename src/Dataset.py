@@ -126,6 +126,9 @@ class Dataset(object):
                 # Iterate through predictions and detections
 
                 prediction_sums = []
+                last_prediction_counts = None
+                last_name = None
+                last_detection_count = None
                 for i, (prediction_grid, detections) in enumerate(
                         zip(self.prediction_grids.after_editing, self.type_one_detections.after_editing)):
                     sys.stdout.write("\rGenerating Stats on Image {}/{}...".format(i, len(self.imgs) - 1))
@@ -152,15 +155,48 @@ class Dataset(object):
                     detection_count = len(get_rect_clusters(detections))
 
                     # Write
-                    print(self.imgs.fnames, i)
-                    f.write("{},{},,{},,{}\n".format(self.imgs.fnames[i], ",".join(map(str, list(prediction_counts))),
+                    full_name = self.imgs.fnames[i]
+                    # if full_name.endswith("(1)"):
+                    #     last_prediction_counts = prediction_counts
+                    #     last_name = " ".join(full_name.split(" ")[:-1])
+                    #     last_detection_count = detection_count
+                    #     continue
+                    # el
+                    if full_name.endswith(")"):
+
+                        current_name = " ".join(full_name.split(" ")[:-1])
+                        if last_prediction_counts is None:
+                            last_prediction_counts = prediction_counts
+                            last_detection_count = detection_count
+                            last_name = current_name
+                        elif last_name == current_name:
+                            for j in range(len(last_prediction_counts)):
+                                last_prediction_counts[j] += prediction_counts[j]
+                            last_detection_count += detection_count
+                            detection_count = last_detection_count
+                            prediction_counts = last_prediction_counts
+                        if i + 1 < len(self.imgs.fnames):
+                            next_name = " ".join(self.imgs.fnames[i + 1].split(" ")[:-1])
+                            if next_name == current_name:
+                                continue
+                            else:
+                                full_name = current_name
+                                prediction_counts = last_prediction_counts
+                                detection_count = last_detection_count
+                                last_prediction_counts = None
+                                last_name = None
+                                last_detection_count = None
+                        else:
+                            full_name = current_name
+
+                    f.write("{},{},,{},,{}\n".format(full_name, ",".join(map(str, list(prediction_counts))),
                                                      ",".join(map(str, list(prediction_avgs))), detection_count))
 
 
                 detection_total = sum([len(get_rect_clusters(d)) for d in self.type_one_detections.after_editing])
 
                 total = sum(prediction_sums)
-                sum_average = [p / total for p in prediction_sums]
+                sum_average = [100 * p / total for p in prediction_sums]
 
                 f.write("\nsummary,{},,{},,{}\n".format(",".join(map(str, list(prediction_sums))),
                                                         ",".join(map(str, list(sum_average))),
