@@ -63,7 +63,7 @@ termcolor==1.1.0
 tifffile==2019.7.26.2
 tkfilebrowser==2.3.2
 typing-extensions==3.7.4.3
-urllib3==1.26.4
+urllib3==1.26.5
 Werkzeug==0.16.0
 wrapt==1.12.1
 yolk3k==0.9
