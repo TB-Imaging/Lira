@@ -40,7 +40,7 @@ pandas==1.2.3
 pefile==2019.4.18
 Pillow==8.1.2
 progressbar2==3.53.1
-protobuf==3.10.0
+protobuf==3.18.3
 psutil==5.8.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
